@@ -8,6 +8,7 @@ package coremidi
 import "C"
 import "unsafe"
 import "errors"
+import "fmt"
 
 type Client struct {
 	client C.MIDIClientRef
@@ -22,7 +23,7 @@ func NewClient(name string) (client Client, err error) {
 	osStatus := C.MIDIClientCreate(C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman), nil, nil, &clientRef)
 
 	if osStatus != C.noErr {
-		err = errors.New("failed to create a client")
+		err = errors.New(fmt.Sprintf("%d: failed to create a client", int(osStatus)))
 	} else {
 		client = Client{clientRef}
 	}

@@ -7,6 +7,7 @@ package coremidi
 import "C"
 import "unsafe"
 import "errors"
+import "fmt"
 
 type Port struct {
 	port C.MIDIPortRef
@@ -23,7 +24,7 @@ func NewOutputPort(client Client, name string) (outputPort OutputPort, err error
 	osStatus := C.MIDIOutputPortCreate(client.client, C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman), &port)
 
 	if osStatus != C.noErr {
-		err = errors.New("failed to create a port")
+		err = errors.New(fmt.Sprintf("%d: failed to create a port", int(osStatus)))
 	} else {
 		outputPort = OutputPort{port}
 	}

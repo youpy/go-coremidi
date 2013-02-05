@@ -18,6 +18,7 @@ void freeByteArray(Byte *array) {
 */
 import "C"
 import "errors"
+import "fmt"
 
 type Packet struct {
 	packetList C.MIDIPacketList
@@ -42,7 +43,7 @@ func (packet Packet) Send(port OutputPort, destination Destination) (result int,
 	osStatus := C.MIDISend(port.port, destination.endpoint, &packet.packetList)
 
 	if osStatus != C.noErr {
-		err = errors.New("failed to send MIDI")
+		err = errors.New(fmt.Sprintf("%d: failed to send MIDI", int(osStatus)))
 	} else {
 		result = int(osStatus)
 	}
