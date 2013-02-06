@@ -12,8 +12,12 @@ func TestNewSource(t *testing.T) {
 }
 
 func TestNumberOfSources(t *testing.T) {
-	sources, _ := AllSources()
+	sources, err := AllSources()
 	numberOfSources := len(sources)
+
+	if err != nil {
+		t.Fatalf("failed to get sources")
+	}
 
 	if numberOfSources <= 0 {
 		t.Fatalf("invalid number of sources")
