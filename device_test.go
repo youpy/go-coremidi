@@ -3,8 +3,12 @@ package coremidi
 import "testing"
 
 func TestNumberOfDevices(t *testing.T) {
-	devices, _ := AllDevices()
+	devices, err := AllDevices()
 	numberOfDevices := len(devices)
+
+	if err != nil {
+		t.Fatalf("failed to get devices")
+	}
 
 	if numberOfDevices <= 0 {
 		t.Fatalf("invalid number of devices")
