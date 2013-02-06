@@ -10,9 +10,9 @@ func TestSend(t *testing.T) {
 	entities, _ := device.Entities()
 	destinations, _ := entities[0].Destinations()
 	destination := destinations[0]
-	packet := NewPacket(0x90, 0x30, 100)
+	packet := NewPacket([]byte{0x90, 0x30, 100})
 
-	_, err := packet.Send(port, destination)
+	err := packet.Send(&port, &destination)
 
 	if err != nil {
 		t.Fatalf("failed to send MIDI")

@@ -24,28 +24,26 @@ type Packet struct {
 	packetList C.MIDIPacketList
 }
 
-func NewPacket(values ...int) Packet {
+func NewPacket(p []byte) Packet {
 	var packetList C.MIDIPacketList
-	var data = C.makeByteArray(C.int(len(values)))
+	var data = C.makeByteArray(C.int(len(p)))
 	defer C.freeByteArray(data)
 
-	for i := range values {
-		C.setByte(data, (C.Byte)(values[i]), C.int(i))
+	for i := range p {
+		C.setByte(data, (C.Byte)(p[i]), C.int(i))
 	}
 
 	packet := C.MIDIPacketListInit(&packetList)
-	packet = C.MIDIPacketListAdd(&packetList, 1024, packet, 0, C.ByteCount(len(values)), data)
+	packet = C.MIDIPacketListAdd(&packetList, 1024, packet, 0, C.ByteCount(len(p)), data)
 
 	return Packet{packetList}
 }
 
-func (packet Packet) Send(port OutputPort, destination Destination) (result int, err error) {
+func (packet Packet) Send(port *OutputPort, destination *Destination) (err error) {
 	osStatus := C.MIDISend(port.port, destination.endpoint, &packet.packetList)
 
 	if osStatus != C.noErr {
 		err = errors.New(fmt.Sprintf("%d: failed to send MIDI", int(osStatus)))
-	} else {
-		result = int(osStatus)
 	}
 
 	return
