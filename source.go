@@ -30,3 +30,28 @@ func NewSource(client Client, name string) (source Source, err error) {
 
 	return
 }
+
+func AllSources() (sources []Source, err error) {
+	numberOfSources := numberOfSources()
+	sources = make([]Source, numberOfSources)
+
+	for i := range sources {
+		source := C.MIDIGetSource(C.ItemCount(i))
+
+		if source == (C.MIDIEndpointRef)(0) {
+			err = errors.New("failed to get source")
+
+			return
+		}
+
+		sources[i] = Source{
+			source,
+			&Object{C.MIDIObjectRef(source)}}
+	}
+
+	return
+}
+
+func numberOfSources() int {
+	return int(C.ItemCount(C.MIDIGetNumberOfSources()))
+}
