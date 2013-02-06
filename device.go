@@ -16,7 +16,7 @@ func AllDevices() (devices []Device, err error) {
 	numberOfDevices := numberOfDevices()
 	devices = make([]Device, numberOfDevices)
 
-	for i := 0; i < numberOfDevices; i++ {
+	for i := range devices {
 		device := C.MIDIGetDevice(C.ItemCount(i))
 
 		if device == (C.MIDIDeviceRef)(0) {
@@ -37,7 +37,7 @@ func (device Device) Entities() (entities []Entity, err error) {
 	numberOfEntitiles := int(C.ItemCount(C.MIDIDeviceGetNumberOfEntities(device.device)))
 	entities = make([]Entity, numberOfEntitiles)
 
-	for i := 0; i < numberOfEntitiles; i++ {
+	for i := range entities {
 		entity := C.MIDIDeviceGetEntity(device.device, C.ItemCount(i))
 
 		if entity == (C.MIDIEntityRef)(0) {

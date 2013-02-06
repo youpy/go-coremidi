@@ -14,9 +14,9 @@ type Entity struct {
 
 func (entity Entity) Sources() (sources []Source, err error) {
 	numberOfSources := int(C.ItemCount(C.MIDIEntityGetNumberOfSources(entity.entity)))
-	sources         = make([]Source, numberOfSources)
+	sources = make([]Source, numberOfSources)
 
-	for i := 0; i < numberOfSources; i++ {
+	for i := range sources {
 		source := C.MIDIEntityGetSource(entity.entity, C.ItemCount(i))
 
 		if source == (C.MIDIEndpointRef)(0) {
@@ -33,9 +33,9 @@ func (entity Entity) Sources() (sources []Source, err error) {
 
 func (entity Entity) Destinations() (destinations []Destination, err error) {
 	numberOfDestinations := int(C.ItemCount(C.MIDIEntityGetNumberOfDestinations(entity.entity)))
-	destinations         = make([]Destination, numberOfDestinations)
+	destinations = make([]Destination, numberOfDestinations)
 
-	for i := 0; i < numberOfDestinations; i++ {
+	for i := range destinations {
 		destination := C.MIDIEntityGetDestination(entity.entity, C.ItemCount(i))
 
 		if destination == (C.MIDIEndpointRef)(0) {
