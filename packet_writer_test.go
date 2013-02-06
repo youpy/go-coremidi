@@ -10,7 +10,7 @@ func TestWrite(t *testing.T) {
 	port, _ := NewOutputPort(client, "test port")
 	destinations, _ := AllDestinations()
 
-	writer = &PacketWriter{port, destinations[0]}
+	writer = NewPacketWriter(port, destinations[0])
 	n, err := writer.Write([]byte{0x90, 0x30, 100})
 
 	if err != nil {
