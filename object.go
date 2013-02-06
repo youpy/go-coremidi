@@ -18,11 +18,17 @@ func (object Object) Manufacturer() string {
 	return object.getStringProperty(C.kMIDIPropertyManufacturer)
 }
 
-func (object Object) getStringProperty(key C.CFStringRef) string {
+func (object Object) getStringProperty(key C.CFStringRef) (propValue string) {
 	var result C.CFStringRef
 
-	C.MIDIObjectGetStringProperty(object.object, key, &result)
-	value := C.CFStringGetCStringPtr(result, C.kCFStringEncodingMacRoman)
+	osStatus := C.MIDIObjectGetStringProperty(object.object, key, &result)
 
-	return C.GoString(value)
+	if osStatus != C.noErr {
+		return
+	}
+
+	value := C.CFStringGetCStringPtr(result, C.kCFStringEncodingMacRoman)
+	propValue = C.GoString(value)
+
+	return
 }
