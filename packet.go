@@ -48,3 +48,13 @@ func (packet Packet) Send(port *OutputPort, destination *Destination) (err error
 
 	return
 }
+
+func (packet Packet) Received(source *Source) (err error) {
+	osStatus := C.MIDIReceived(source.endpoint, &packet.packetList)
+
+	if osStatus != C.noErr {
+		err = errors.New(fmt.Sprintf("%d: failed to transmit MIDI", int(osStatus)))
+	}
+
+	return
+}
