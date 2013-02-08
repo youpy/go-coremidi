@@ -10,14 +10,14 @@ import "fmt"
 #include <stdio.h>
 #include <unistd.h>
 
-extern void goCallback(void *proc, char *value);
+extern void goCallback(void *proc, void *source, char *value);
 
 static int getIntValue(int *array, int index)
 {
   return array[index];
 }
 
-static void readFromPipeAndCallback(int fd, void *proc)
+ static void readFromPipeAndCallback(int fd, void *proc, void *source)
 {
   int n;
   char readbuffer[1024];
@@ -25,7 +25,7 @@ static void readFromPipeAndCallback(int fd, void *proc)
   while((n = read(fd, readbuffer, sizeof(readbuffer) - 1)) > 0) {
     readbuffer[n] = 0x00;
 
-    goCallback(proc, readbuffer);
+    goCallback(proc, source, readbuffer);
   }
 }
 
@@ -61,10 +61,10 @@ static midi_input_proc getProc()
 import "C"
 
 //export goCallback
-func goCallback(proc unsafe.Pointer, p1 *C.char) {
-	foo := *(*func([]byte))(proc)
+func goCallback(proc unsafe.Pointer, source unsafe.Pointer, p1 *C.char) {
+	foo := *(*func(source Source, value []byte))(proc)
 
-	foo(([]byte)(C.GoString(p1)))
+	foo(*(*Source)(source), ([]byte)(C.GoString(p1)))
 }
 
 type OutputPort struct {
@@ -73,7 +73,7 @@ type OutputPort struct {
 
 type InputPort struct {
 	port     C.MIDIPortRef
-	readProc func([]byte)
+	readProc func(source Source, value []byte)
 }
 
 func NewOutputPort(client Client, name string) (outputPort OutputPort, err error) {
@@ -93,7 +93,7 @@ func NewOutputPort(client Client, name string) (outputPort OutputPort, err error
 	return
 }
 
-func NewInputPort(client Client, name string, readProc func([]byte)) (inputPort InputPort, err error) {
+func NewInputPort(client Client, name string, readProc func(source Source, value []byte)) (inputPort InputPort, err error) {
 	var port C.MIDIPortRef
 
 	cName := C.CString(name)
@@ -122,7 +122,7 @@ func (port InputPort) Connect(source Source) {
 
 	go func() {
 		// TODO: should terminate when MIDIPortDisconnectSource is called
-		C.readFromPipeAndCallback(C.getIntValue(fd, 0), unsafe.Pointer(&port.readProc))
+		C.readFromPipeAndCallback(C.getIntValue(fd, 0), unsafe.Pointer(&port.readProc), unsafe.Pointer(&source))
 	}()
 }
 

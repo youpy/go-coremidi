@@ -20,8 +20,8 @@ func TestNewOutputPort(t *testing.T) {
 func TestNewInputPort(t *testing.T) {
 	client, _ := NewClient("test")
 
-	port, err := NewInputPort(client, "test", func(value []byte) {
-		fmt.Printf("value: %v\n", value)
+	port, err := NewInputPort(client, "test", func(source Source, value []byte) {
+		fmt.Printf("source: %v value: %v\n", source.Name(), value)
 	})
 
 	if err != nil {
