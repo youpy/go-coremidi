@@ -17,7 +17,7 @@ static int getIntValue(int *array, int index)
   return array[index];
 }
 
- static void readFromPipeAndCallback(int fd, void *proc, void *source)
+static void readFromPipeAndCallback(int fd, void *proc, void *source)
 {
   int n;
   char readbuffer[1024];
@@ -74,6 +74,7 @@ type OutputPort struct {
 type InputPort struct {
 	port     C.MIDIPortRef
 	readProc func(source Source, value []byte)
+	writeFd  C.int
 }
 
 func NewOutputPort(client Client, name string) (outputPort OutputPort, err error) {
@@ -101,14 +102,14 @@ func NewInputPort(client Client, name string, readProc func(source Source, value
 
 	osStatus := C.MIDIInputPortCreate(client.client,
 		C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman),
-		(C.MIDIReadProc)(unsafe.Pointer(C.getProc())),
+		(C.MIDIReadProc)(C.getProc()),
 		unsafe.Pointer(uintptr(0)),
 		&port)
 
 	if osStatus != C.noErr {
 		err = errors.New(fmt.Sprintf("%d: failed to create a port", int(osStatus)))
 	} else {
-		inputPort = InputPort{port, readProc}
+		inputPort = InputPort{port: port, readProc: readProc}
 	}
 
 	return
@@ -116,9 +117,9 @@ func NewInputPort(client Client, name string, readProc func(source Source, value
 
 func (port InputPort) Connect(source Source) {
 	fd := pipe()
-	writeFd := C.getIntValue(fd, 1)
+	port.writeFd = C.getIntValue(fd, 1)
 
-	C.MIDIPortConnectSource(port.port, source.endpoint, unsafe.Pointer(&writeFd))
+	C.MIDIPortConnectSource(port.port, source.endpoint, unsafe.Pointer(&port.writeFd))
 
 	go func() {
 		// TODO: should terminate when MIDIPortDisconnectSource is called
