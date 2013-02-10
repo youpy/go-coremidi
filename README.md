@@ -10,6 +10,8 @@ go get github.com/youpy/go-coremidi
 
 ## Synopsis
 
+### Monitor MIDI Messages
+
 ```go
 package main
 
