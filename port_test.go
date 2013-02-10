@@ -2,6 +2,7 @@ package coremidi
 
 import "testing"
 import "bytes"
+import "time"
 
 func TestNewOutputPort(t *testing.T) {
 	client, err := NewClient("test")
@@ -20,6 +21,7 @@ func TestNewOutputPort(t *testing.T) {
 func TestNewInputPort(t *testing.T) {
 	client, _ := NewClient("test")
 	ch := make(chan []byte)
+	timeout := make(chan bool, 1)
 
 	port, err := NewInputPort(client, "test", func(source Source, value []byte) {
 		ch <- value
@@ -36,11 +38,19 @@ func TestNewInputPort(t *testing.T) {
 	packet := NewPacket([]byte{0x90, 0x30, 100})
 	packet.Received(&sources[0])
 
-	value := <-ch
+	go func() {
+		time.Sleep(1 * time.Second)
+		timeout <- true
+	}()
 
-	if bytes.Compare(value, []byte{0x90, 0x30, 100}) != 0 {
-		t.Fatalf("invalid value: %v", value)
+	select {
+	case value := <-ch:
+		if bytes.Compare(value, []byte{0x90, 0x30, 100}) != 0 {
+			t.Fatalf("invalid value: %v", value)
+		}
+
+		connection.Disconnect()
+	case <-timeout:
+		t.Fatal("timed out")
 	}
-
-	connection.Disconnect()
 }
