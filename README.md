@@ -14,9 +14,8 @@ go get github.com/youpy/go-coremidi
 package main
 
 import (
-	"fmt"
 	"github.com/youpy/go-coremidi"
-	"time"
+	"fmt"
 )
 
 func main() {
@@ -50,6 +49,7 @@ func main() {
 		}(source)
 	}
 
-	time.Sleep(10 * time.Second)
+	ch := make(chan int)
+	<-ch
 }
 ```
