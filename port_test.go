@@ -1,6 +1,7 @@
 package coremidi
 
 import "testing"
+import "bytes"
 
 func TestNewOutputPort(t *testing.T) {
 	client, err := NewClient("test")
@@ -37,7 +38,7 @@ func TestNewInputPort(t *testing.T) {
 
 	value := <-ch
 
-	if len(value) != 3 || value[0] != 0x90 {
+	if bytes.Compare(value, []byte{0x90, 0x30, 100}) != 0 {
 		t.Fatalf("invalid value: %v", value)
 	}
 
