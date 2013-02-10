@@ -1,6 +1,6 @@
 # go-coremidi
 
-A Go library using MIDI on Mac
+A Go library to use MIDI on Mac
 
 ## Installation
 
