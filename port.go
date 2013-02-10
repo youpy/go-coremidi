@@ -60,21 +60,8 @@ static midi_input_proc getProc()
 */
 import "C"
 
-//export goCallback
-func goCallback(proc unsafe.Pointer, source unsafe.Pointer, p1 *C.char) {
-	foo := *(*func(source Source, value []byte))(proc)
-
-	foo(*(*Source)(source), ([]byte)(C.GoString(p1)))
-}
-
 type OutputPort struct {
 	port C.MIDIPortRef
-}
-
-type InputPort struct {
-	port     C.MIDIPortRef
-	readProc func(source Source, value []byte)
-	writeFd  C.int
 }
 
 func NewOutputPort(client Client, name string) (outputPort OutputPort, err error) {
@@ -94,6 +81,12 @@ func NewOutputPort(client Client, name string) (outputPort OutputPort, err error
 	return
 }
 
+type InputPort struct {
+	port     C.MIDIPortRef
+	readProc func(source Source, value []byte)
+	writeFds []*C.int
+}
+
 func NewInputPort(client Client, name string, readProc func(source Source, value []byte)) (inputPort InputPort, err error) {
 	var port C.MIDIPortRef
 
@@ -109,7 +102,7 @@ func NewInputPort(client Client, name string, readProc func(source Source, value
 	if osStatus != C.noErr {
 		err = errors.New(fmt.Sprintf("%d: failed to create a port", int(osStatus)))
 	} else {
-		inputPort = InputPort{port: port, readProc: readProc}
+		inputPort = InputPort{port, readProc, make([]*C.int, 0)}
 	}
 
 	return
@@ -117,9 +110,10 @@ func NewInputPort(client Client, name string, readProc func(source Source, value
 
 func (port InputPort) Connect(source Source) {
 	fd := pipe()
-	port.writeFd = C.getIntValue(fd, 1)
+	writeFd := C.getIntValue(fd, 1)
+	port.writeFds = append(port.writeFds, &writeFd)
 
-	C.MIDIPortConnectSource(port.port, source.endpoint, unsafe.Pointer(&port.writeFd))
+	C.MIDIPortConnectSource(port.port, source.endpoint, unsafe.Pointer(&writeFd))
 
 	go func() {
 		// TODO: should terminate when MIDIPortDisconnectSource is called
@@ -129,4 +123,11 @@ func (port InputPort) Connect(source Source) {
 
 func pipe() *C.int {
 	return C.make_pipe()
+}
+
+//export goCallback
+func goCallback(proc unsafe.Pointer, source unsafe.Pointer, p1 *C.char) {
+	foo := *(*func(source Source, value []byte))(proc)
+
+	foo(*(*Source)(source), ([]byte)(C.GoString(p1)))
 }
