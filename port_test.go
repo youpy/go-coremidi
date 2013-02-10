@@ -1,7 +1,6 @@
 package coremidi
 
 import "testing"
-import "fmt"
 
 func TestNewOutputPort(t *testing.T) {
 	client, err := NewClient("test")
@@ -19,9 +18,10 @@ func TestNewOutputPort(t *testing.T) {
 
 func TestNewInputPort(t *testing.T) {
 	client, _ := NewClient("test")
+	ch := make(chan []byte)
 
 	port, err := NewInputPort(client, "test", func(source Source, value []byte) {
-		fmt.Printf("source: %v value: %v\n", source.Name(), value)
+		ch <- value
 	})
 
 	if err != nil {
@@ -34,4 +34,10 @@ func TestNewInputPort(t *testing.T) {
 
 	packet := NewPacket([]byte{0x90, 0x30, 100})
 	packet.Received(&sources[0])
+
+	value := <-ch
+
+	if len(value) != 3 || value[0] != 0x90 {
+		t.Fatalf("invalid value: %v", value)
+	}
 }
