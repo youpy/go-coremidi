@@ -108,7 +108,7 @@ func NewInputPort(client Client, name string, readProc func(source Source, value
 	return
 }
 
-func (port InputPort) Connect(source Source) {
+func (port InputPort) Connect(source Source) (portConnection, error) {
 	fd := pipe()
 	writeFd := C.getIntValue(fd, 1)
 	port.writeFds = append(port.writeFds, &writeFd)
@@ -119,6 +119,17 @@ func (port InputPort) Connect(source Source) {
 		// TODO: should terminate when MIDIPortDisconnectSource is called
 		C.readFromPipeAndCallback(C.getIntValue(fd, 0), unsafe.Pointer(&port.readProc), unsafe.Pointer(&source))
 	}()
+
+	return portConnection{port, source}, nil
+}
+
+type portConnection struct {
+	port   InputPort
+	source Source
+}
+
+func (connection portConnection) Disconnect() {
+	C.MIDIPortDisconnectSource(connection.port.port, connection.source.endpoint)
 }
 
 func pipe() *C.int {

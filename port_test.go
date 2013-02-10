@@ -30,7 +30,7 @@ func TestNewInputPort(t *testing.T) {
 
 	sources, _ := AllSources()
 
-	port.Connect(sources[0])
+	connection, _ := port.Connect(sources[0])
 
 	packet := NewPacket([]byte{0x90, 0x30, 100})
 	packet.Received(&sources[0])
@@ -40,4 +40,6 @@ func TestNewInputPort(t *testing.T) {
 	if len(value) != 3 || value[0] != 0x90 {
 		t.Fatalf("invalid value: %v", value)
 	}
+
+	connection.Disconnect()
 }
