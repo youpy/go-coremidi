@@ -24,9 +24,12 @@ static void readFromPipeAndCallback(int fd, void *proc, void *source)
 
   while((n = read(fd, readbuffer, 1)) > 0) {
     size = readbuffer[0];
-    read(fd, readbuffer, size);
-    readbuffer[size] = 0x00;
-    goCallback(proc, source, readbuffer);
+    n = read(fd, readbuffer, size);
+
+    if(n == size) {
+      readbuffer[size] = 0x00;
+      goCallback(proc, source, readbuffer);
+    }
   }
 }
 
