@@ -1,24 +1,13 @@
 package coremidi
 
 /*
-#cgo LDFLAGS: -framework CoreMIDI -framework CoreFoundation
+#cgo LDFLAGS: -framework CoreMIDI
 #include <CoreMIDI/CoreMIDI.h>
-
-Byte *makeByteArray(int size) {
-  return calloc(sizeof(Byte), size);
-}
-
-void setByte(Byte *array, Byte value, int n) {
-  array[n] = value;
-}
-
-void freeByteArray(Byte *array) {
- free(array);
-}
 */
 import "C"
 import "errors"
 import "fmt"
+import "unsafe"
 
 type Packet struct {
 	packetList C.MIDIPacketList
@@ -26,12 +15,7 @@ type Packet struct {
 
 func NewPacket(p []byte) Packet {
 	var packetList C.MIDIPacketList
-	var data = C.makeByteArray(C.int(len(p)))
-	defer C.freeByteArray(data)
-
-	for i := range p {
-		C.setByte(data, (C.Byte)(p[i]), C.int(i))
-	}
+	var data = (*C.Byte)(unsafe.Pointer(&p[0]))
 
 	packet := C.MIDIPacketListInit(&packetList)
 	packet = C.MIDIPacketListAdd(&packetList, 1024, packet, 0, C.ByteCount(len(p)), data)
