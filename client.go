@@ -18,9 +18,12 @@ func NewClient(name string) (client Client, err error) {
 	var clientRef C.MIDIClientRef
 
 	cName := C.CString(name)
-	defer C.free(unsafe.Pointer(cName))
+	cfName := C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman)
 
-	osStatus := C.MIDIClientCreate(C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman), nil, nil, &clientRef)
+	defer C.free(unsafe.Pointer(cName))
+	defer C.CFRelease((C.CFTypeRef)(cfName))
+
+	osStatus := C.MIDIClientCreate(cfName, nil, nil, &clientRef)
 
 	if osStatus != C.noErr {
 		err = errors.New(fmt.Sprintf("%d: failed to create a client", int(osStatus)))

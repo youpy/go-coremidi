@@ -81,9 +81,12 @@ func NewOutputPort(client Client, name string) (outputPort OutputPort, err error
 	var port C.MIDIPortRef
 
 	cName := C.CString(name)
-	defer C.free(unsafe.Pointer(cName))
+	cfName := C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman)
 
-	osStatus := C.MIDIOutputPortCreate(client.client, C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman), &port)
+	defer C.free(unsafe.Pointer(cName))
+	defer C.CFRelease((C.CFTypeRef)(cfName))
+
+	osStatus := C.MIDIOutputPortCreate(client.client, cfName, &port)
 
 	if osStatus != C.noErr {
 		err = errors.New(fmt.Sprintf("%d: failed to create a port", int(osStatus)))
@@ -105,10 +108,13 @@ func NewInputPort(client Client, name string, readProc ReadProc) (inputPort Inpu
 	var port C.MIDIPortRef
 
 	cName := C.CString(name)
+	cfName := C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman)
+
 	defer C.free(unsafe.Pointer(cName))
+	defer C.CFRelease((C.CFTypeRef)(cfName))
 
 	osStatus := C.MIDIInputPortCreate(client.client,
-		C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman),
+		cfName,
 		(C.MIDIReadProc)(C.getProc()),
 		unsafe.Pointer(uintptr(0)),
 		&port)

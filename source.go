@@ -18,9 +18,12 @@ func NewSource(client Client, name string) (source Source, err error) {
 	var endpointRef C.MIDIEndpointRef
 
 	cName := C.CString(name)
-	defer C.free(unsafe.Pointer(cName))
+	cfName := C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman)
 
-	osStatus := C.MIDISourceCreate(client.client, C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman), &endpointRef)
+	defer C.free(unsafe.Pointer(cName))
+	defer C.CFRelease((C.CFTypeRef)(cfName))
+
+	osStatus := C.MIDISourceCreate(client.client, cfName, &endpointRef)
 
 	if osStatus != C.noErr {
 		err = errors.New(fmt.Sprintf("%d: failed to create a source", int(osStatus)))
