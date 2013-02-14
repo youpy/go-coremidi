@@ -19,13 +19,17 @@ static int getIntValue(int *array, int index)
 
 static void readFromPipeAndCallback(int fd, void *proc, void *source)
 {
-  int n;
-  char readbuffer[1024];
+  int n, size;
+  char readbuffer[30];
 
-  while((n = read(fd, readbuffer, sizeof(readbuffer) - 1)) > 0) {
-    readbuffer[n] = 0x00;
+  while((n = read(fd, readbuffer, 1)) > 0) {
+    size = readbuffer[0];
+    n = read(fd, readbuffer, size);
 
-    goCallback(proc, source, readbuffer);
+    if(n == size) {
+      readbuffer[size] = 0x00;
+      goCallback(proc, source, readbuffer);
+    }
   }
 }
 
@@ -42,11 +46,20 @@ static void MIDIInputProc(const MIDIPacketList *pktlist, void *readProcRefCon,  
 {
   MIDIPacket *packet = (MIDIPacket *)&(pktlist->packet[0]);
   UInt32 packetCount = pktlist->numPackets;
-  int i, n;
+  int i, j, n;
+  Byte *data;
 
   for (i = 0; i < packetCount; i++) {
-    n = write(*(int *)srcConnRefCon, &packet->data, packet->length);
+    data = calloc(sizeof(Byte), packet->length + 1);
+    *data = packet->length;
+
+    for (j = 0; j < packet->length; j++) {
+      *(data + j + 1) = *(packet->data + j);
+    }
+
+    n = write(*(int *)srcConnRefCon, data, packet->length + 1);
     packet = MIDIPacketNext(packet);
+    free(data);
   }
 }
 
