@@ -21,7 +21,6 @@ func TestNewOutputPort(t *testing.T) {
 func TestNewInputPort(t *testing.T) {
 	client, _ := NewClient("test")
 	ch := make(chan []byte)
-	timeout := make(chan bool, 1)
 
 	port, err := NewInputPort(client, "test", func(source Source, value []byte) {
 		ch <- value
@@ -38,11 +37,6 @@ func TestNewInputPort(t *testing.T) {
 	packet := NewPacket([]byte{0x90, 0x30, 100})
 	packet.Received(&sources[0])
 
-	go func() {
-		time.Sleep(1 * time.Second)
-		timeout <- true
-	}()
-
 	select {
 	case value := <-ch:
 		if bytes.Compare(value, []byte{0x90, 0x30, 100}) != 0 {
@@ -50,7 +44,7 @@ func TestNewInputPort(t *testing.T) {
 		}
 
 		connection.Disconnect()
-	case <-timeout:
+	case <-time.After(1 * time.Second):
 		t.Fatal("timed out")
 	}
 }
