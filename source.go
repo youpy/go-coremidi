@@ -5,7 +5,6 @@ package coremidi
 #include <CoreMIDI/CoreMIDI.h>
 */
 import "C"
-import "unsafe"
 import "errors"
 import "fmt"
 
@@ -17,19 +16,15 @@ type Source struct {
 func NewSource(client Client, name string) (source Source, err error) {
 	var endpointRef C.MIDIEndpointRef
 
-	cName := C.CString(name)
-	cfName := C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman)
+	stringToCFString(name, func(cfName C.CFStringRef) {
+		osStatus := C.MIDISourceCreate(client.client, cfName, &endpointRef)
 
-	defer C.free(unsafe.Pointer(cName))
-	defer C.CFRelease((C.CFTypeRef)(cfName))
-
-	osStatus := C.MIDISourceCreate(client.client, cfName, &endpointRef)
-
-	if osStatus != C.noErr {
-		err = errors.New(fmt.Sprintf("%d: failed to create a source", int(osStatus)))
-	} else {
-		source = Source{endpointRef, &Object{C.MIDIObjectRef(endpointRef)}}
-	}
+		if osStatus != C.noErr {
+			err = errors.New(fmt.Sprintf("%d: failed to create a source", int(osStatus)))
+		} else {
+			source = Source{endpointRef, &Object{C.MIDIObjectRef(endpointRef)}}
+		}
+	})
 
 	return
 }

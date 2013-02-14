@@ -80,19 +80,15 @@ type OutputPort struct {
 func NewOutputPort(client Client, name string) (outputPort OutputPort, err error) {
 	var port C.MIDIPortRef
 
-	cName := C.CString(name)
-	cfName := C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman)
+	stringToCFString(name, func(cfName C.CFStringRef) {
+		osStatus := C.MIDIOutputPortCreate(client.client, cfName, &port)
 
-	defer C.free(unsafe.Pointer(cName))
-	defer C.CFRelease((C.CFTypeRef)(cfName))
-
-	osStatus := C.MIDIOutputPortCreate(client.client, cfName, &port)
-
-	if osStatus != C.noErr {
-		err = errors.New(fmt.Sprintf("%d: failed to create a port", int(osStatus)))
-	} else {
-		outputPort = OutputPort{port}
-	}
+		if osStatus != C.noErr {
+			err = errors.New(fmt.Sprintf("%d: failed to create a port", int(osStatus)))
+		} else {
+			outputPort = OutputPort{port}
+		}
+	})
 
 	return
 }
@@ -107,23 +103,19 @@ type InputPort struct {
 func NewInputPort(client Client, name string, readProc ReadProc) (inputPort InputPort, err error) {
 	var port C.MIDIPortRef
 
-	cName := C.CString(name)
-	cfName := C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman)
+	stringToCFString(name, func(cfName C.CFStringRef) {
+		osStatus := C.MIDIInputPortCreate(client.client,
+			cfName,
+			(C.MIDIReadProc)(C.getProc()),
+			unsafe.Pointer(uintptr(0)),
+			&port)
 
-	defer C.free(unsafe.Pointer(cName))
-	defer C.CFRelease((C.CFTypeRef)(cfName))
-
-	osStatus := C.MIDIInputPortCreate(client.client,
-		cfName,
-		(C.MIDIReadProc)(C.getProc()),
-		unsafe.Pointer(uintptr(0)),
-		&port)
-
-	if osStatus != C.noErr {
-		err = errors.New(fmt.Sprintf("%d: failed to create a port", int(osStatus)))
-	} else {
-		inputPort = InputPort{port, readProc, make([]*C.int, 0)}
-	}
+		if osStatus != C.noErr {
+			err = errors.New(fmt.Sprintf("%d: failed to create a port", int(osStatus)))
+		} else {
+			inputPort = InputPort{port, readProc, make([]*C.int, 0)}
+		}
+	})
 
 	return
 }

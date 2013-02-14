@@ -6,7 +6,6 @@ package coremidi
 #include <CoreServices/CoreServices.h>
 */
 import "C"
-import "unsafe"
 import "errors"
 import "fmt"
 
@@ -17,19 +16,15 @@ type Client struct {
 func NewClient(name string) (client Client, err error) {
 	var clientRef C.MIDIClientRef
 
-	cName := C.CString(name)
-	cfName := C.CFStringCreateWithCString(nil, cName, C.kCFStringEncodingMacRoman)
+	stringToCFString(name, func(cfName C.CFStringRef) {
+		osStatus := C.MIDIClientCreate(cfName, nil, nil, &clientRef)
 
-	defer C.free(unsafe.Pointer(cName))
-	defer C.CFRelease((C.CFTypeRef)(cfName))
-
-	osStatus := C.MIDIClientCreate(cfName, nil, nil, &clientRef)
-
-	if osStatus != C.noErr {
-		err = errors.New(fmt.Sprintf("%d: failed to create a client", int(osStatus)))
-	} else {
-		client = Client{clientRef}
-	}
+		if osStatus != C.noErr {
+			err = errors.New(fmt.Sprintf("%d: failed to create a client", int(osStatus)))
+		} else {
+			client = Client{clientRef}
+		}
+	})
 
 	return
 }
