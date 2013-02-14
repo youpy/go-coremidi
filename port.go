@@ -94,13 +94,14 @@ func NewOutputPort(client Client, name string) (outputPort OutputPort, err error
 	return
 }
 
+type ReadProc func(source Source, value []byte)
 type InputPort struct {
 	port     C.MIDIPortRef
-	readProc func(source Source, value []byte)
+	readProc ReadProc
 	writeFds []*C.int
 }
 
-func NewInputPort(client Client, name string, readProc func(source Source, value []byte)) (inputPort InputPort, err error) {
+func NewInputPort(client Client, name string, readProc ReadProc) (inputPort InputPort, err error) {
 	var port C.MIDIPortRef
 
 	cName := C.CString(name)
@@ -158,7 +159,7 @@ func pipe() *C.int {
 
 //export goCallback
 func goCallback(proc unsafe.Pointer, source unsafe.Pointer, p1 *C.char) {
-	foo := *(*func(source Source, value []byte))(proc)
+	foo := *(*ReadProc)(proc)
 
 	foo(*(*Source)(source), ([]byte)(C.GoString(p1)))
 }
