@@ -27,6 +27,8 @@ func (object Object) getStringProperty(key C.CFStringRef) (propValue string) {
 		return
 	}
 
+	defer C.CFRelease((C.CFTypeRef)(result))
+
 	value := C.CFStringGetCStringPtr(result, C.kCFStringEncodingMacRoman)
 	propValue = C.GoString(value)
 
