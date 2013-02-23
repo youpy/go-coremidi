@@ -1,8 +1,11 @@
 package coremidi
 
-import "unsafe"
-import "errors"
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"syscall"
+	"unsafe"
+)
 
 /*
 #cgo LDFLAGS: -framework CoreMIDI -framework CoreFoundation
@@ -11,11 +14,6 @@ import "fmt"
 #include <unistd.h>
 
 extern void goCallback(void *proc, void *source, char *value);
-
-static int getIntValue(int *array, int index)
-{
-  return array[index];
-}
 
 static void readFromPipeAndCallback(int fd, void *proc, void *source)
 {
@@ -31,15 +29,6 @@ static void readFromPipeAndCallback(int fd, void *proc, void *source)
       goCallback(proc, source, readbuffer);
     }
   }
-}
-
-static int *make_pipe()
-{
-  int *fd = calloc(sizeof(int), 2);
-
-  pipe(fd);
-
-  return fd;
 }
 
 static void MIDIInputProc(const MIDIPacketList *pktlist, void *readProcRefCon,  void *srcConnRefCon)
@@ -121,20 +110,23 @@ func NewInputPort(client Client, name string, readProc ReadProc) (inputPort Inpu
 }
 
 func (port InputPort) Connect(source Source) (portConnection, error) {
-	fd := pipe()
-	readFd := C.getIntValue(fd, 0)
-	writeFd := C.getIntValue(fd, 1)
+	fd := make([]int, 2)
+
+	syscall.Pipe(fd)
+
+	readFd := fd[0]
+	writeFd := C.int(fd[1])
 	port.writeFds = append(port.writeFds, &writeFd)
 
 	C.MIDIPortConnectSource(port.port, source.endpoint, unsafe.Pointer(&writeFd))
 
 	go func() {
 		C.readFromPipeAndCallback(
-			readFd,
+			C.int(readFd),
 			unsafe.Pointer(&port.readProc),
 			unsafe.Pointer(&source))
 
-		C.close(readFd)
+		syscall.Close(readFd)
 	}()
 
 	return portConnection{port, source, &writeFd}, nil
@@ -149,10 +141,6 @@ type portConnection struct {
 func (connection portConnection) Disconnect() {
 	C.close(*connection.writeFd)
 	C.MIDIPortDisconnectSource(connection.port.port, connection.source.endpoint)
-}
-
-func pipe() *C.int {
-	return C.make_pipe()
 }
 
 //export goCallback
