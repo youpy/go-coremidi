@@ -13,24 +13,6 @@ import (
 #include <stdio.h>
 #include <unistd.h>
 
-extern void goCallback(void *proc, void *source, char *value);
-
-static void readFromPipeAndCallback(int fd, void *proc, void *source)
-{
-  int n, size;
-  char readbuffer[30];
-
-  while((n = read(fd, readbuffer, 1)) > 0) {
-    size = readbuffer[0];
-    n = read(fd, readbuffer, size);
-
-    if(n == size) {
-      readbuffer[size] = 0x00;
-      goCallback(proc, source, readbuffer);
-    }
-  }
-}
-
 static void MIDIInputProc(const MIDIPacketList *pktlist, void *readProcRefCon,  void *srcConnRefCon)
 {
   MIDIPacket *packet = (MIDIPacket *)&(pktlist->packet[0]);
@@ -121,10 +103,24 @@ func (port InputPort) Connect(source Source) (portConnection, error) {
 	C.MIDIPortConnectSource(port.port, source.endpoint, unsafe.Pointer(&writeFd))
 
 	go func() {
-		C.readFromPipeAndCallback(
-			C.int(readFd),
-			unsafe.Pointer(&port.readProc),
-			unsafe.Pointer(&source))
+		dataForLength := make([]byte, 1)
+
+		for {
+			n, err := syscall.Read(readFd, dataForLength)
+			if err != nil || n != 1 {
+				break
+			}
+
+			length := dataForLength[0]
+			data := make([]byte, length)
+
+			n, err = syscall.Read(readFd, data)
+			if err != nil || n != int(length) {
+				break
+			}
+
+			port.readProc(source, data)
+		}
 
 		syscall.Close(readFd)
 	}()
@@ -139,13 +135,6 @@ type portConnection struct {
 }
 
 func (connection portConnection) Disconnect() {
-	C.close(*connection.writeFd)
+	syscall.Close(int(*connection.writeFd))
 	C.MIDIPortDisconnectSource(connection.port.port, connection.source.endpoint)
-}
-
-//export goCallback
-func goCallback(proc unsafe.Pointer, source unsafe.Pointer, p1 *C.char) {
-	foo := *(*ReadProc)(proc)
-
-	foo(*(*Source)(source), ([]byte)(C.GoString(p1)))
 }
