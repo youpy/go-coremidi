@@ -55,3 +55,7 @@ func main() {
 	<-ch
 }
 ```
+
+## Documents
+
+* http://godoc.org/github.com/youpy/go-coremidi
