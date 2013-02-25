@@ -68,6 +68,7 @@ type ReadProc func(source Source, value []byte)
 type InputPort struct {
 	port     C.MIDIPortRef
 	readProc ReadProc
+	writeFds []*C.int
 }
 
 func NewInputPort(client Client, name string, readProc ReadProc) (inputPort InputPort, err error) {
@@ -83,7 +84,7 @@ func NewInputPort(client Client, name string, readProc ReadProc) (inputPort Inpu
 		if osStatus != C.noErr {
 			err = errors.New(fmt.Sprintf("%d: failed to create a port", int(osStatus)))
 		} else {
-			inputPort = InputPort{port, readProc}
+			inputPort = InputPort{port, readProc, make([]*C.int, 0)}
 		}
 	})
 
@@ -97,6 +98,7 @@ func (port InputPort) Connect(source Source) (portConnection, error) {
 
 	readFd := fd[0]
 	writeFd := C.int(fd[1])
+	port.writeFds = append(port.writeFds, &writeFd)
 
 	C.MIDIPortConnectSource(port.port, source.endpoint, unsafe.Pointer(&writeFd))
 
