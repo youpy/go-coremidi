@@ -28,6 +28,12 @@ static void MIDIInputProc(const MIDIPacketList *pktlist, void *readProcRefCon,  
       *(data + j + 1) = *(packet->data + j);
     }
 
+    // http://man7.org/linux/man-pages/man7/pipe.7.html
+    //
+    // POSIX.1-2001 says that write(2)s of less than PIPE_BUF bytes must be
+    // atomic: the output data is written to the pipe as a contiguous sequence.
+    //
+    // POSIX.1-2001 requires PIPE_BUF to be at least 512 bytes.
     n = write(*(int *)srcConnRefCon, data, packet->length + 1);
     packet = MIDIPacketNext(packet);
     free(data);
