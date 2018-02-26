@@ -1,8 +1,10 @@
 package coremidi
 
-import "testing"
-import "bytes"
-import "time"
+import (
+	"bytes"
+	"testing"
+	"time"
+)
 
 func TestNewOutputPort(t *testing.T) {
 	client, err := NewClient("test")
