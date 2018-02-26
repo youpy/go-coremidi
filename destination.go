@@ -6,7 +6,7 @@ package coremidi
 #include <stdio.h>
 #include <unistd.h>
 
-static void MIDIInputProc(const MIDIPacketList *pktlist, void *readProcRefCon,  void *srcConnRefCon)
+static void MIDIDestinationInputProc(const MIDIPacketList *pktlist, void *readProcRefCon, void *srcConnRefCon)
 {
   MIDIPacket *packet = (MIDIPacket *)&(pktlist->packet[0]);
   UInt32 packetCount = pktlist->numPackets;
@@ -27,17 +27,17 @@ static void MIDIInputProc(const MIDIPacketList *pktlist, void *readProcRefCon,  
     // atomic: the output data is written to the pipe as a contiguous sequence.
     //
     // POSIX.1-2001 requires PIPE_BUF to be at least 512 bytes.
-    n = write(*(int *)srcConnRefCon, data, packet->length + 1);
+    n = write(*(int *)readProcRefCon, data, packet->length + 1);
     packet = MIDIPacketNext(packet);
     free(data);
   }
 }
 
-typedef void (*midi_input_proc)(const MIDIPacketList *pktlist, void *readProcRefCon, void *srcConnRefCon);
+typedef void (*midi_destination_input_proc)(const MIDIPacketList *pktlist, void *readProcRefCon, void *srcConnRefCon);
 
-static midi_input_proc getProc()
+static midi_destination_input_proc getMidiDestinationProc()
 {
-  return *MIDIInputProc;
+  return *MIDIDestinationInputProc;
 }
 
 */
@@ -45,6 +45,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"syscall"
 	"unsafe"
 )
 
@@ -74,15 +75,43 @@ func AllDestinations() (destinations []Destination, err error) {
 	return
 }
 
-func NewDestination(client Client, name string, readProc ReadProc) (destination Destination, err error) {
+func NewDestination(client Client, name string, readProc func(value []byte)) (destination Destination, err error) {
 	var endpointRef C.MIDIEndpointRef
+
+	fd := make([]int, 2)
+	syscall.Pipe(fd)
+	readFd := fd[0]
+	writeFd := C.int(fd[1])
+
+	go func() {
+		dataForLength := make([]byte, 1)
+
+		for {
+			n, err := syscall.Read(readFd, dataForLength)
+			if err != nil || n != 1 {
+				break
+			}
+
+			length := dataForLength[0]
+			data := make([]byte, length)
+
+			n, err = syscall.Read(readFd, data)
+			if err != nil || n != int(length) {
+				break
+			}
+
+			readProc(data)
+		}
+
+		syscall.Close(readFd)
+	}()
 
 	stringToCFString(name, func(cfName C.CFStringRef) {
 		osStatus := C.MIDIDestinationCreate(
 			client.client,
 			cfName,
-			(C.MIDIReadProc)(C.getProc()),
-			unsafe.Pointer(uintptr(0)),
+			(C.MIDIReadProc)(C.getMidiDestinationProc()),
+			unsafe.Pointer(&writeFd),
 			&endpointRef,
 		)
 
@@ -94,6 +123,10 @@ func NewDestination(client Client, name string, readProc ReadProc) (destination 
 	})
 
 	return
+}
+
+func (dest Destination) Dispose() {
+	C.MIDIEndpointDispose(dest.endpoint)
 }
 
 func numberOfDestinations() int {
