@@ -14,12 +14,11 @@ static void MIDIDestinationInputProc(const MIDIPacketList *pktlist, void *readPr
   Byte *data;
 
   for (i = 0; i < packetCount; i++) {
-    data = calloc(sizeof(Byte), packet->length + 1);
+    data = calloc(sizeof(Byte), packet->length + 9);
     *data = packet->length;
 
-    for (j = 0; j < packet->length; j++) {
-      *(data + j + 1) = *(packet->data + j);
-    }
+    memcpy(data + 1, &(packet->timeStamp), 8);
+    memcpy(data + 9, packet->data, packet->length);
 
     // http://man7.org/linux/man-pages/man7/pipe.7.html
     //
@@ -27,7 +26,7 @@ static void MIDIDestinationInputProc(const MIDIPacketList *pktlist, void *readPr
     // atomic: the output data is written to the pipe as a contiguous sequence.
     //
     // POSIX.1-2001 requires PIPE_BUF to be at least 512 bytes.
-    n = write(*(int *)readProcRefCon, data, packet->length + 1);
+    n = write(*(int *)readProcRefCon, data, packet->length + 9);
     packet = MIDIPacketNext(packet);
     free(data);
   }
@@ -43,6 +42,8 @@ static midi_destination_input_proc getMidiDestinationProc()
 */
 import "C"
 import (
+	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"syscall"
@@ -75,8 +76,9 @@ func AllDestinations() (destinations []Destination, err error) {
 	return
 }
 
-func NewDestination(client Client, name string, readProc func(value []byte)) (destination Destination, err error) {
+func NewDestination(client Client, name string, readProc func(packet Packet)) (destination Destination, err error) {
 	var endpointRef C.MIDIEndpointRef
+	var timeStamp uint64
 
 	fd := make([]int, 2)
 	syscall.Pipe(fd)
@@ -93,6 +95,18 @@ func NewDestination(client Client, name string, readProc func(value []byte)) (de
 			}
 
 			length := dataForLength[0]
+			timeStampBytes := make([]byte, 8)
+
+			n, err = syscall.Read(readFd, timeStampBytes)
+			if err != nil || n != 8 {
+				break
+			}
+
+			err = binary.Read(bytes.NewBuffer(timeStampBytes[:]), binary.LittleEndian, &timeStamp)
+			if err != nil {
+				break
+			}
+
 			data := make([]byte, length)
 
 			n, err = syscall.Read(readFd, data)
@@ -100,7 +114,7 @@ func NewDestination(client Client, name string, readProc func(value []byte)) (de
 				break
 			}
 
-			readProc(data)
+			readProc(NewPacket(data, timeStamp))
 		}
 
 		syscall.Close(readFd)

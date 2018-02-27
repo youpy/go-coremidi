@@ -35,8 +35,8 @@ func main() {
 		panic(err)
 	}
 
-	port, err := coremidi.NewInputPort(client, "an input", func(source coremidi.Source, value []byte) {
-		coremidi.NewPacket(value).Send(&outPort, &targetDestination)
+	port, err := coremidi.NewInputPort(client, "an input", func(source coremidi.Source, packet coremidi.Packet) {
+		packet.Send(&outPort, &targetDestination)
 
 		return
 	})

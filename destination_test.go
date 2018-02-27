@@ -22,14 +22,14 @@ func TestNewDestination(t *testing.T) {
 		panic(err)
 	}
 
-	ch := make(chan []byte)
-	mixerDestination, err := NewDestination(client, "FM destination", func(value []byte) {
-		err := NewPacket(value).Received(&mixerSource)
+	ch := make(chan Packet)
+	mixerDestination, err := NewDestination(client, "FM destination", func(packet Packet) {
+		err := packet.Received(&mixerSource)
 		if err != nil {
 			panic(err)
 		}
 
-		ch <- value
+		ch <- packet
 
 		return
 	})
@@ -41,8 +41,8 @@ func TestNewDestination(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	port, err := NewInputPort(client, "test", func(source Source, value []byte) {
-		NewPacket(value).Send(&outPort, &mixerDestination)
+	port, err := NewInputPort(client, "test", func(source Source, packet Packet) {
+		packet.Send(&outPort, &mixerDestination)
 		return
 	})
 
@@ -58,13 +58,17 @@ func TestNewDestination(t *testing.T) {
 		}
 	}
 
-	packet := NewPacket([]byte{0x90, 0x30, 100})
+	packet := NewPacket([]byte{0x90, 0x30, 100}, 1234)
 	packet.Received(&sources[0])
 
 	select {
-	case value := <-ch:
-		if bytes.Compare(value, []byte{0x90, 0x30, 100}) != 0 {
-			t.Fatalf("invalid value: %v", value)
+	case packet := <-ch:
+		if bytes.Compare(packet.Data, []byte{0x90, 0x30, 100}) != 0 {
+			t.Fatalf("invalid value: %v", packet.Data)
+		}
+
+		if packet.TimeStamp != 1234 {
+			t.Fatalf("invalid timestamp: %v", packet.TimeStamp)
 		}
 
 		mixerDestination.Dispose()

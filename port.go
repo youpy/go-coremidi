@@ -1,6 +1,8 @@
 package coremidi
 
 import (
+	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"syscall"
@@ -21,12 +23,11 @@ static void MIDIInputProc(const MIDIPacketList *pktlist, void *readProcRefCon,  
   Byte *data;
 
   for (i = 0; i < packetCount; i++) {
-    data = calloc(sizeof(Byte), packet->length + 1);
+    data = calloc(sizeof(Byte), packet->length + 9);
     *data = packet->length;
 
-    for (j = 0; j < packet->length; j++) {
-      *(data + j + 1) = *(packet->data + j);
-    }
+    memcpy(data + 1, &(packet->timeStamp), 8);
+    memcpy(data + 9, packet->data, packet->length);
 
     // http://man7.org/linux/man-pages/man7/pipe.7.html
     //
@@ -34,7 +35,7 @@ static void MIDIInputProc(const MIDIPacketList *pktlist, void *readProcRefCon,  
     // atomic: the output data is written to the pipe as a contiguous sequence.
     //
     // POSIX.1-2001 requires PIPE_BUF to be at least 512 bytes.
-    n = write(*(int *)srcConnRefCon, data, packet->length + 1);
+    n = write(*(int *)srcConnRefCon, data, packet->length + 9);
     packet = MIDIPacketNext(packet);
     free(data);
   }
@@ -70,7 +71,7 @@ func NewOutputPort(client Client, name string) (outputPort OutputPort, err error
 	return
 }
 
-type ReadProc func(source Source, value []byte)
+type ReadProc func(source Source, packet Packet)
 type InputPort struct {
 	port     C.MIDIPortRef
 	readProc ReadProc
@@ -98,6 +99,8 @@ func NewInputPort(client Client, name string, readProc ReadProc) (inputPort Inpu
 }
 
 func (port InputPort) Connect(source Source) (portConnection, error) {
+	var timeStamp uint64
+
 	fd := make([]int, 2)
 
 	syscall.Pipe(fd)
@@ -118,6 +121,18 @@ func (port InputPort) Connect(source Source) (portConnection, error) {
 			}
 
 			length := dataForLength[0]
+			timeStampBytes := make([]byte, 8)
+
+			n, err = syscall.Read(readFd, timeStampBytes)
+			if err != nil || n != 8 {
+				break
+			}
+
+			err = binary.Read(bytes.NewBuffer(timeStampBytes[:]), binary.LittleEndian, &timeStamp)
+			if err != nil {
+				break
+			}
+
 			data := make([]byte, length)
 
 			n, err = syscall.Read(readFd, data)
@@ -125,7 +140,7 @@ func (port InputPort) Connect(source Source) (portConnection, error) {
 				break
 			}
 
-			port.readProc(source, data)
+			port.readProc(source, NewPacket(data, timeStamp))
 		}
 
 		syscall.Close(readFd)

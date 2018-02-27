@@ -22,10 +22,10 @@ func TestNewOutputPort(t *testing.T) {
 
 func TestNewInputPort(t *testing.T) {
 	client, _ := NewClient("test")
-	ch := make(chan []byte)
+	ch := make(chan Packet)
 
-	port, err := NewInputPort(client, "test", func(source Source, value []byte) {
-		ch <- value
+	port, err := NewInputPort(client, "test", func(source Source, packet Packet) {
+		ch <- packet
 	})
 
 	if err != nil {
@@ -36,13 +36,17 @@ func TestNewInputPort(t *testing.T) {
 
 	connection, _ := port.Connect(sources[0])
 
-	packet := NewPacket([]byte{0x90, 0x30, 100})
+	packet := NewPacket([]byte{0x90, 0x30, 100}, 2345)
 	packet.Received(&sources[0])
 
 	select {
-	case value := <-ch:
-		if bytes.Compare(value, []byte{0x90, 0x30, 100}) != 0 {
-			t.Fatalf("invalid value: %v", value)
+	case packet := <-ch:
+		if bytes.Compare(packet.Data, []byte{0x90, 0x30, 100}) != 0 {
+			t.Fatalf("invalid value: %v", packet.Data)
+		}
+
+		if packet.TimeStamp != 2345 {
+			t.Fatalf("invalid timestamp: %v", packet.TimeStamp)
 		}
 
 		connection.Disconnect()

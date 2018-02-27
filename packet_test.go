@@ -10,7 +10,7 @@ func TestSend(t *testing.T) {
 	entities, _ := device.Entities()
 	destinations, _ := entities[0].Destinations()
 	destination := destinations[0]
-	packet := NewPacket([]byte{0x90, 0x30, 100})
+	packet := NewPacket([]byte{0x90, 0x30, 100}, 0)
 
 	err := packet.Send(&port, &destination)
 
@@ -22,7 +22,7 @@ func TestSend(t *testing.T) {
 func TestReceived(t *testing.T) {
 	client, _ := NewClient("test client")
 	source, _ := NewSource(client, "test source")
-	packet := NewPacket([]byte{0x90, 0x30, 100})
+	packet := NewPacket([]byte{0x90, 0x30, 100}, 0)
 
 	err := packet.Received(&source)
 

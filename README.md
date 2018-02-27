@@ -35,8 +35,8 @@ func main() {
 		return
 	}
 
-	port, err := coremidi.NewInputPort(client, "test", func(source coremidi.Source, value []byte) {
-		fmt.Printf("source: %v manufacturer: %v value: %v\n", source.Name(), source.Manufacturer(), value)
+	port, err := coremidi.NewInputPort(client, "test", func(source coremidi.Source, packet coremidi.Packet) {
+		fmt.Printf("source: %v manufacturer: %v data: %v\n", source.Name(), source.Manufacturer(), packet.Data)
 		return
 	})
 

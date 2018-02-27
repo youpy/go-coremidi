@@ -10,21 +10,27 @@ import "fmt"
 import "unsafe"
 
 type Packet struct {
-	packetList C.MIDIPacketList
+	Data      []byte
+	TimeStamp uint64
 }
 
-func NewPacket(p []byte) Packet {
+func NewPacket(data []byte, timeStamp uint64) Packet {
+	return Packet{data, timeStamp}
+}
+
+func (packet *Packet) createPacketList() C.MIDIPacketList {
 	var packetList C.MIDIPacketList
-	var data = (*C.Byte)(unsafe.Pointer(&p[0]))
+	var data = (*C.Byte)(unsafe.Pointer(&packet.Data[0]))
 
-	packet := C.MIDIPacketListInit(&packetList)
-	packet = C.MIDIPacketListAdd(&packetList, 1024, packet, 0, C.ByteCount(len(p)), data)
+	p := C.MIDIPacketListInit(&packetList)
+	p = C.MIDIPacketListAdd(&packetList, 1024, p, C.MIDITimeStamp(packet.TimeStamp), C.ByteCount(len(packet.Data)), data)
 
-	return Packet{packetList}
+	return packetList
 }
 
-func (packet Packet) Send(port *OutputPort, destination *Destination) (err error) {
-	osStatus := C.MIDISend(port.port, destination.endpoint, &packet.packetList)
+func (packet *Packet) Send(port *OutputPort, destination *Destination) (err error) {
+	packetList := packet.createPacketList()
+	osStatus := C.MIDISend(port.port, destination.endpoint, &packetList)
 
 	if osStatus != C.noErr {
 		err = errors.New(fmt.Sprintf("%d: failed to send MIDI", int(osStatus)))
@@ -33,8 +39,9 @@ func (packet Packet) Send(port *OutputPort, destination *Destination) (err error
 	return
 }
 
-func (packet Packet) Received(source *Source) (err error) {
-	osStatus := C.MIDIReceived(source.endpoint, &packet.packetList)
+func (packet *Packet) Received(source *Source) (err error) {
+	packetList := packet.createPacketList()
+	osStatus := C.MIDIReceived(source.endpoint, &packetList)
 
 	if osStatus != C.noErr {
 		err = errors.New(fmt.Sprintf("%d: failed to transmit MIDI", int(osStatus)))
