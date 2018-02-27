@@ -16,8 +16,9 @@ go get github.com/youpy/go-coremidi
 package main
 
 import (
-	"github.com/youpy/go-coremidi"
 	"fmt"
+
+	"github.com/youpy/go-coremidi"
 )
 
 func main() {
@@ -35,10 +36,19 @@ func main() {
 		return
 	}
 
-	port, err := coremidi.NewInputPort(client, "test", func(source coremidi.Source, packet coremidi.Packet) {
-		fmt.Printf("source: %v manufacturer: %v data: %v\n", source.Name(), source.Manufacturer(), packet.Data)
-		return
-	})
+	port, err := coremidi.NewInputPort(
+		client,
+		"test",
+		func(source coremidi.Source, packet coremidi.Packet) {
+			fmt.Printf(
+				"source: %v manufacturer: %v data: %v\n",
+				source.Name(),
+				source.Manufacturer(),
+				packet.Data,
+			)
+			return
+		},
+	)
 
 	if err != nil {
 		fmt.Println(err)
