@@ -42,8 +42,6 @@ static midi_destination_input_proc getMidiDestinationProc()
 */
 import "C"
 import (
-	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"syscall"
@@ -78,47 +76,19 @@ func AllDestinations() (destinations []Destination, err error) {
 
 func NewDestination(client Client, name string, readProc func(packet Packet)) (destination Destination, err error) {
 	var endpointRef C.MIDIEndpointRef
-	var timeStamp uint64
 
 	fd := make([]int, 2)
 	syscall.Pipe(fd)
 	readFd := fd[0]
 	writeFd := C.int(fd[1])
 
-	go func() {
-		dataForLength := make([]byte, 1)
-
-		for {
-			n, err := syscall.Read(readFd, dataForLength)
-			if err != nil || n != 1 {
-				break
-			}
-
-			length := dataForLength[0]
-			timeStampBytes := make([]byte, 8)
-
-			n, err = syscall.Read(readFd, timeStampBytes)
-			if err != nil || n != 8 {
-				break
-			}
-
-			err = binary.Read(bytes.NewBuffer(timeStampBytes[:]), binary.LittleEndian, &timeStamp)
-			if err != nil {
-				break
-			}
-
-			data := make([]byte, length)
-
-			n, err = syscall.Read(readFd, data)
-			if err != nil || n != int(length) {
-				break
-			}
-
+	go processImcomingPacket(
+		readFd,
+		func(data []byte, timeStamp uint64) {
 			readProc(NewPacket(data, timeStamp))
-		}
-
-		syscall.Close(readFd)
-	}()
+			return
+		},
+	)
 
 	stringToCFString(name, func(cfName C.CFStringRef) {
 		osStatus := C.MIDIDestinationCreate(

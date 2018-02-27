@@ -1,8 +1,6 @@
 package coremidi
 
 import (
-	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"syscall"
@@ -99,52 +97,21 @@ func NewInputPort(client Client, name string, readProc ReadProc) (inputPort Inpu
 }
 
 func (port InputPort) Connect(source Source) (portConnection, error) {
-	var timeStamp uint64
-
 	fd := make([]int, 2)
-
 	syscall.Pipe(fd)
-
 	readFd := fd[0]
 	writeFd := C.int(fd[1])
 	port.writeFds = append(port.writeFds, &writeFd)
 
 	C.MIDIPortConnectSource(port.port, source.endpoint, unsafe.Pointer(&writeFd))
 
-	go func() {
-		dataForLength := make([]byte, 1)
-
-		for {
-			n, err := syscall.Read(readFd, dataForLength)
-			if err != nil || n != 1 {
-				break
-			}
-
-			length := dataForLength[0]
-			timeStampBytes := make([]byte, 8)
-
-			n, err = syscall.Read(readFd, timeStampBytes)
-			if err != nil || n != 8 {
-				break
-			}
-
-			err = binary.Read(bytes.NewBuffer(timeStampBytes[:]), binary.LittleEndian, &timeStamp)
-			if err != nil {
-				break
-			}
-
-			data := make([]byte, length)
-
-			n, err = syscall.Read(readFd, data)
-			if err != nil || n != int(length) {
-				break
-			}
-
+	go processImcomingPacket(
+		readFd,
+		func(data []byte, timeStamp uint64) {
 			port.readProc(source, NewPacket(data, timeStamp))
-		}
-
-		syscall.Close(readFd)
-	}()
+			return
+		},
+	)
 
 	return portConnection{port, source, &writeFd}, nil
 }
