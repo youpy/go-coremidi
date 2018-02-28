@@ -112,7 +112,6 @@ func (port InputPort) Connect(source Source) (portConnection, error) {
 		readFd,
 		func(data []byte, timeStamp uint64) {
 			port.readProc(source, NewPacket(data, timeStamp))
-			return
 		},
 	)
 

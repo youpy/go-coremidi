@@ -89,7 +89,6 @@ func NewDestination(client Client, name string, readProc func(packet Packet)) (d
 		readFd,
 		func(data []byte, timeStamp uint64) {
 			readProc(NewPacket(data, timeStamp))
-			return
 		},
 	)
 
