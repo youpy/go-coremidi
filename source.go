@@ -50,6 +50,15 @@ func AllSources() (sources []Source, err error) {
 	return
 }
 
+func (source *Source) Entity() (entity Entity) {
+	var entityRef C.MIDIEntityRef
+
+	C.MIDIEndpointGetEntity(source.endpoint, &entityRef)
+	entity = Entity{entityRef, &Object{C.MIDIObjectRef(entityRef)}}
+
+	return
+}
+
 func numberOfSources() int {
 	return int(C.ItemCount(C.MIDIGetNumberOfSources()))
 }

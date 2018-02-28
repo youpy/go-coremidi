@@ -23,3 +23,15 @@ func TestNumberOfSources(t *testing.T) {
 		t.Fatalf("invalid number of sources")
 	}
 }
+
+func TestEntity(t *testing.T) {
+	sources, err := AllSources()
+	if err != nil {
+		t.Fatalf("failed to get sources")
+	}
+
+	entity := sources[0].Entity()
+	if entity.Name() == "" {
+		t.Fatalf("failed to get entity")
+	}
+}
