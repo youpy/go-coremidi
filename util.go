@@ -23,20 +23,24 @@ func stringToCFString(str string, callback func(cfStr C.CFStringRef)) {
 }
 
 func processImcomingPacket(readFd int, onMessage func(data []byte, timeStamp uint64)) {
+	var length uint16
 	var timeStamp uint64
-
-	dataForLength := make([]byte, 1)
 
 	defer syscall.Close(readFd)
 
 	for {
-		n, err := syscall.Read(readFd, dataForLength)
-		if err != nil || n != 1 {
+		lengthBytes := make([]byte, 2)
+		timeStampBytes := make([]byte, 8)
+
+		n, err := syscall.Read(readFd, lengthBytes)
+		if err != nil || n != 2 {
 			break
 		}
 
-		length := dataForLength[0]
-		timeStampBytes := make([]byte, 8)
+		err = binary.Read(bytes.NewBuffer(lengthBytes[:]), binary.LittleEndian, &length)
+		if err != nil {
+			break
+		}
 
 		n, err = syscall.Read(readFd, timeStampBytes)
 		if err != nil || n != 8 {

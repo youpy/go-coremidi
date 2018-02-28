@@ -13,12 +13,15 @@ static void MIDIDestinationInputProc(const MIDIPacketList *pktlist, void *readPr
   int i, j, n;
   Byte *data;
 
-  for (i = 0; i < packetCount; i++) {
-    data = calloc(sizeof(Byte), packet->length + 9);
-    *data = packet->length;
+  int lengthBytes = 2;
+  int timeStampBytes = 8;
 
-    memcpy(data + 1, &(packet->timeStamp), 8);
-    memcpy(data + 9, packet->data, packet->length);
+  for (i = 0; i < packetCount; i++) {
+    data = calloc(sizeof(Byte), packet->length + lengthBytes + timeStampBytes);
+
+    memcpy(data, &(packet->length), lengthBytes);
+    memcpy(data + lengthBytes, &(packet->timeStamp), timeStampBytes);
+    memcpy(data + lengthBytes + timeStampBytes, packet->data, packet->length);
 
     // http://man7.org/linux/man-pages/man7/pipe.7.html
     //
@@ -26,7 +29,7 @@ static void MIDIDestinationInputProc(const MIDIPacketList *pktlist, void *readPr
     // atomic: the output data is written to the pipe as a contiguous sequence.
     //
     // POSIX.1-2001 requires PIPE_BUF to be at least 512 bytes.
-    n = write(*(int *)readProcRefCon, data, packet->length + 9);
+    n = write(*(int *)readProcRefCon, data, packet->length + lengthBytes + timeStampBytes);
     packet = MIDIPacketNext(packet);
     free(data);
   }
