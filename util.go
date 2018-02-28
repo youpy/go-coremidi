@@ -22,7 +22,7 @@ func stringToCFString(str string, callback func(cfStr C.CFStringRef)) {
 	callback(cfStr)
 }
 
-func processImcomingPacket(readFd int, onFinish func(data []byte, timeStamp uint64)) {
+func processImcomingPacket(readFd int, onMessage func(data []byte, timeStamp uint64)) {
 	var timeStamp uint64
 
 	dataForLength := make([]byte, 1)
@@ -55,6 +55,6 @@ func processImcomingPacket(readFd int, onFinish func(data []byte, timeStamp uint
 			break
 		}
 
-		onFinish(data, timeStamp)
+		onMessage(data, timeStamp)
 	}
 }
