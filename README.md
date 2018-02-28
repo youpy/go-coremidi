@@ -23,14 +23,6 @@ import (
 
 func main() {
 	client, err := coremidi.NewClient("a client")
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	sources, err := coremidi.AllSources()
-
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -41,15 +33,21 @@ func main() {
 		"test",
 		func(source coremidi.Source, packet coremidi.Packet) {
 			fmt.Printf(
-				"source: %v manufacturer: %v data: %v\n",
-				source.Name(),
+				"device: %v, manufacturer: %v, source: %v, data: %v\n",
+				source.Entity().Device().Name(),
 				source.Manufacturer(),
+				source.Name(),
 				packet.Data,
 			)
 			return
 		},
 	)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
+	sources, err := coremidi.AllSources()
 	if err != nil {
 		fmt.Println(err)
 		return
