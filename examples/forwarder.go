@@ -1,13 +1,20 @@
-// Proxy incoming MIDI messages from MIDI keyboard to another MIDI interface
+// Forward incoming MIDI messages from MIDI keyboard to another MIDI interface
 
 package main
 
 import (
+	"flag"
+
 	coremidi "github.com/youpy/go-coremidi"
 )
 
 func main() {
-	var targetDestination coremidi.Destination
+	var sourceName string
+	var destinationName string
+
+	flag.StringVar(&sourceName, "source", "KEYBOARD", "source name")
+	flag.StringVar(&destinationName, "destination", "UM-ONE", "destination name")
+	flag.Parse()
 
 	client, err := coremidi.NewClient("a client")
 	if err != nil {
@@ -24,8 +31,9 @@ func main() {
 		panic(err)
 	}
 
+	var targetDestination coremidi.Destination
 	for _, destination := range destinations {
-		if destination.Name() == "UM-ONE" {
+		if destination.Name() == destinationName {
 			targetDestination = destination
 		}
 	}
@@ -45,7 +53,7 @@ func main() {
 	}
 
 	for _, source := range sources {
-		if source.Name() == "KEYBOARD" {
+		if source.Name() == sourceName {
 			port.Connect(source)
 		}
 	}
