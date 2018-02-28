@@ -25,3 +25,15 @@ func TestDestinations(t *testing.T) {
 		t.Fatalf("invalid number of destinations")
 	}
 }
+
+func TestDevice(t *testing.T) {
+	devices, _ := AllDevices()
+	device := devices[0]
+	entities, _ := device.Entities()
+	entity := entities[0]
+
+	result := entity.Device()
+	if result.Name() != device.Name() {
+		t.Fatalf("invalid name of device")
+	}
+}

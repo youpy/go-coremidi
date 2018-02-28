@@ -49,3 +49,12 @@ func (entity Entity) Destinations() (destinations []Destination, err error) {
 
 	return
 }
+
+func (entity Entity) Device() (device Device) {
+	var deviceRef C.MIDIDeviceRef
+
+	C.MIDIEntityGetDevice(entity.entity, &deviceRef)
+	device = Device{deviceRef, &Object{C.MIDIObjectRef(deviceRef)}}
+
+	return
+}
