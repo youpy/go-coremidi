@@ -14,7 +14,7 @@ import (
 
 func stringToCFString(str string, callback func(cfStr C.CFStringRef)) {
 	cStr := C.CString(str)
-	cfStr := C.CFStringCreateWithCString(nil, cStr, C.kCFStringEncodingMacRoman)
+	cfStr := C.CFStringCreateWithCString(C.kCFAllocatorDefault, cStr, C.kCFStringEncodingMacRoman)
 
 	defer C.free(unsafe.Pointer(cStr))
 	defer C.CFRelease((C.CFTypeRef)(cfStr))
