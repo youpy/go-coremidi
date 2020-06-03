@@ -1,6 +1,9 @@
 package coremidi
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestSources(t *testing.T) {
 	devices, _ := AllDevices()

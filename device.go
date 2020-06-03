@@ -5,7 +5,9 @@ package coremidi
 #include <CoreMIDI/CoreMIDI.h>
 */
 import "C"
-import "errors"
+import (
+	"errors"
+)
 
 type Device struct {
 	device C.MIDIDeviceRef

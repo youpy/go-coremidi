@@ -1,6 +1,8 @@
 package coremidi
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestNumberOfDevices(t *testing.T) {
 	devices, err := AllDevices()
