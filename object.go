@@ -4,7 +4,7 @@ package coremidi
 #cgo LDFLAGS: -framework CoreMIDI -framework CoreFoundation
 #include <CoreMIDI/CoreMIDI.h>
 
-// based on https://stackoverflow.com/a/9167472
+// based on https://stackoverflow.com/a/9166500
 char * MyCFStringCopyUTF8String(CFStringRef aString, CFStringEncoding encoding) {
   if (aString == NULL) {
     return NULL;
