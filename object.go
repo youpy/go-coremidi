@@ -5,7 +5,7 @@ package coremidi
 #include <CoreMIDI/CoreMIDI.h>
 
 // based on https://stackoverflow.com/a/9166500
-char * MyCFStringCopyUTF8String(CFStringRef aString, CFStringEncoding encoding) {
+char * MyCFStringCopyCString(CFStringRef aString, CFStringEncoding encoding) {
   if (aString == NULL) {
     return NULL;
   }
@@ -52,7 +52,7 @@ func (object Object) getStringProperty(key C.CFStringRef) (propValue string) {
 
 	defer C.CFRelease((C.CFTypeRef)(result))
 
-	value := C.MyCFStringCopyUTF8String(result, C.kCFStringEncodingUTF8)
+	value := C.MyCFStringCopyCString(result, C.kCFStringEncodingUTF8)
 	defer C.free(unsafe.Pointer(value))
 
 	propValue = C.GoString(value)
