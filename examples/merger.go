@@ -1,6 +1,8 @@
 package main
 
-import coremidi ".."
+import (
+	coremidi "github.com/youpy/go-coremidi"
+)
 
 func main() {
 	client, err := coremidi.NewClient("a client")

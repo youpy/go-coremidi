@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	coremidi ".."
+	coremidi "github.com/youpy/go-coremidi"
 )
 
 func main() {
