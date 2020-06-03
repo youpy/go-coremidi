@@ -15,8 +15,7 @@ func TestSend(t *testing.T) {
 	destination := destinations[0]
 	packet := NewPacket([]byte{0x90, 0x30, 100}, 0)
 
-	err := packet.Send(&port, &destination)
-
+	err = packet.Send(&port, &destination)
 	if err != nil {
 		t.Fatalf("failed to send MIDI")
 	}
