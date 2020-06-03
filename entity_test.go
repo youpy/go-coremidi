@@ -6,8 +6,11 @@ import (
 )
 
 func TestSources(t *testing.T) {
-	devices, _ := AllDevices()
-	device := devices[0]
+	device, err := findDeviceWithEntities()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	entities, _ := device.Entities()
 	entity := entities[0]
 	sources, _ := entity.Sources()
@@ -18,8 +21,11 @@ func TestSources(t *testing.T) {
 }
 
 func TestDestinations(t *testing.T) {
-	devices, _ := AllDevices()
-	device := devices[0]
+	device, err := findDeviceWithEntities()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	entities, _ := device.Entities()
 	entity := entities[0]
 	destinations, _ := entity.Destinations()
@@ -30,13 +36,32 @@ func TestDestinations(t *testing.T) {
 }
 
 func TestDevice(t *testing.T) {
-	devices, _ := AllDevices()
-	device := devices[0]
+	device, err := findDeviceWithEntities()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	entities, _ := device.Entities()
 	entity := entities[0]
-
 	result := entity.Device()
+
 	if result.Name() != device.Name() {
 		t.Fatalf("invalid name of device")
 	}
+}
+
+func findDeviceWithEntities() (Device, error) {
+	var device Device
+
+	devices, _ := AllDevices()
+
+	for _, dev := range devices {
+		entities, _ := dev.Entities()
+
+		if len(entities) > 0 {
+			return dev, nil
+		}
+	}
+
+	return device, errors.New("no device with entity was found")
 }

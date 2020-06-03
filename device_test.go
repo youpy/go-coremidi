@@ -17,19 +17,12 @@ func TestNumberOfDevices(t *testing.T) {
 	}
 }
 
-func TestEntities(t *testing.T) {
-	devices, _ := AllDevices()
-	device := devices[0]
-	entities, _ := device.Entities()
-
-	if len(entities) <= 0 {
-		t.Fatalf("invalid number of entities")
-	}
-}
-
 func TestManufacturer(t *testing.T) {
-	devices, _ := AllDevices()
-	device := devices[0]
+	device, err := findDeviceWithEntities()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	value := device.Manufacturer()
 
 	if len(value) == 0 {

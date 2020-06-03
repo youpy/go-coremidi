@@ -3,8 +3,11 @@ package coremidi
 import "testing"
 
 func TestSend(t *testing.T) {
-	devices, _ := AllDevices()
-	device := devices[0]
+	device, err := findDeviceWithEntities()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	client, _ := NewClient("test client")
 	port, _ := NewOutputPort(client, "test port")
 	entities, _ := device.Entities()
