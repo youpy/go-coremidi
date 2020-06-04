@@ -85,7 +85,7 @@ func NewDestination(client Client, name string, readProc func(packet Packet)) (d
 	readFd := fd[0]
 	writeFd := C.int(fd[1])
 
-	go processImcomingPacket(
+	go processIncomingPacket(
 		readFd,
 		func(data []byte, timeStamp uint64) {
 			readProc(NewPacket(data, timeStamp))

@@ -108,7 +108,7 @@ func (port InputPort) Connect(source Source) (portConnection, error) {
 
 	C.MIDIPortConnectSource(port.port, source.endpoint, unsafe.Pointer(&writeFd))
 
-	go processImcomingPacket(
+	go processIncomingPacket(
 		readFd,
 		func(data []byte, timeStamp uint64) {
 			port.readProc(source, NewPacket(data, timeStamp))
