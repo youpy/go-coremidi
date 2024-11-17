@@ -30,8 +30,6 @@ func TestNewDestination(t *testing.T) {
 		}
 
 		ch <- packet
-
-		return
 	})
 	if err != nil {
 		panic(err)
@@ -43,7 +41,6 @@ func TestNewDestination(t *testing.T) {
 	}
 	port, err := NewInputPort(client, "test", func(source Source, packet Packet) {
 		packet.Send(&outPort, &mixerDestination)
-		return
 	})
 
 	if err != nil {
