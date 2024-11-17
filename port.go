@@ -85,7 +85,7 @@ func NewInputPort(client Client, name string, readProc ReadProc) (inputPort Inpu
 		osStatus := C.MIDIInputPortCreate(client.client,
 			cfName,
 			(C.MIDIReadProc)(C.getProc()),
-			unsafe.Pointer(uintptr(0)),
+			unsafe.Pointer(nil),
 			&port)
 
 		if osStatus != C.noErr {
