@@ -5,9 +5,10 @@ package coremidi
 #include <CoreMIDI/CoreMIDI.h>
 */
 import "C"
-import "errors"
-import "fmt"
-import "unsafe"
+import (
+	"fmt"
+	"unsafe"
+)
 
 type Packet struct {
 	Data      []byte
@@ -33,7 +34,7 @@ func (packet *Packet) Send(port *OutputPort, destination *Destination) (err erro
 	osStatus := C.MIDISend(port.port, destination.endpoint, &packetList)
 
 	if osStatus != C.noErr {
-		err = errors.New(fmt.Sprintf("%d: failed to send MIDI", int(osStatus)))
+		err = fmt.Errorf("%d: failed to send MIDI", int(osStatus))
 	}
 
 	return
@@ -44,7 +45,7 @@ func (packet *Packet) Received(source *Source) (err error) {
 	osStatus := C.MIDIReceived(source.endpoint, &packetList)
 
 	if osStatus != C.noErr {
-		err = errors.New(fmt.Sprintf("%d: failed to transmit MIDI", int(osStatus)))
+		err = fmt.Errorf("%d: failed to transmit MIDI", int(osStatus))
 	}
 
 	return

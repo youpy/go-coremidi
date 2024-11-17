@@ -102,7 +102,7 @@ func NewDestination(client Client, name string, readProc func(packet Packet)) (d
 		)
 
 		if osStatus != C.noErr {
-			err = errors.New(fmt.Sprintf("%d: failed to create a destination", int(osStatus)))
+			err = fmt.Errorf("%d: failed to create a destination", int(osStatus))
 		} else {
 			destination = Destination{endpointRef, &Object{C.MIDIObjectRef(endpointRef)}}
 		}

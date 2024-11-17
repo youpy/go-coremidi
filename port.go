@@ -1,7 +1,6 @@
 package coremidi
 
 import (
-	"errors"
 	"fmt"
 	"syscall"
 	"unsafe"
@@ -63,7 +62,7 @@ func NewOutputPort(client Client, name string) (outputPort OutputPort, err error
 		osStatus := C.MIDIOutputPortCreate(client.client, cfName, &port)
 
 		if osStatus != C.noErr {
-			err = errors.New(fmt.Sprintf("%d: failed to create a port", int(osStatus)))
+			err = fmt.Errorf("%d: failed to create a port", int(osStatus))
 		} else {
 			outputPort = OutputPort{port}
 		}

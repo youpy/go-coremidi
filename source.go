@@ -5,8 +5,10 @@ package coremidi
 #include <CoreMIDI/CoreMIDI.h>
 */
 import "C"
-import "errors"
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 type Source struct {
 	endpoint C.MIDIEndpointRef
@@ -20,7 +22,7 @@ func NewSource(client Client, name string) (source Source, err error) {
 		osStatus := C.MIDISourceCreate(client.client, cfName, &endpointRef)
 
 		if osStatus != C.noErr {
-			err = errors.New(fmt.Sprintf("%d: failed to create a source", int(osStatus)))
+			err = fmt.Errorf("%d: failed to create a source", int(osStatus))
 		} else {
 			source = Source{endpointRef, &Object{C.MIDIObjectRef(endpointRef)}}
 		}

@@ -6,7 +6,7 @@ package coremidi
 #include <CoreServices/CoreServices.h>
 */
 import "C"
-import "errors"
+
 import "fmt"
 
 type Client struct {
@@ -20,7 +20,7 @@ func NewClient(name string) (client Client, err error) {
 		osStatus := C.MIDIClientCreate(cfName, nil, nil, &clientRef)
 
 		if osStatus != C.noErr {
-			err = errors.New(fmt.Sprintf("%d: failed to create a client", int(osStatus)))
+			err = fmt.Errorf("%d: failed to create a client", int(osStatus))
 		} else {
 			client = Client{clientRef}
 		}
