@@ -24,7 +24,7 @@ func (packet *Packet) createPacketList() C.MIDIPacketList {
 	var data = (*C.Byte)(unsafe.Pointer(&packet.Data[0]))
 
 	p := C.MIDIPacketListInit(&packetList)
-	p = C.MIDIPacketListAdd(&packetList, 1024, p, C.MIDITimeStamp(packet.TimeStamp), C.ByteCount(len(packet.Data)), data)
+	C.MIDIPacketListAdd(&packetList, 1024, p, C.MIDITimeStamp(packet.TimeStamp), C.ByteCount(len(packet.Data)), data)
 
 	return packetList
 }
