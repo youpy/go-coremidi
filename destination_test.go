@@ -60,7 +60,7 @@ func TestNewDestination(t *testing.T) {
 
 	select {
 	case packet := <-ch:
-		if bytes.Compare(packet.Data, []byte{0x90, 0x30, 100}) != 0 {
+		if !bytes.Equal(packet.Data, []byte{0x90, 0x30, 100}) {
 			t.Fatalf("invalid value: %v", packet.Data)
 		}
 
