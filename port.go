@@ -89,7 +89,7 @@ func NewInputPort(client Client, name string, readProc ReadProc) (inputPort Inpu
 			&port)
 
 		if osStatus != C.noErr {
-			err = errors.New(fmt.Sprintf("%d: failed to create a port", int(osStatus)))
+			err = fmt.Errorf("%d: failed to create a port", int(osStatus))
 		} else {
 			inputPort = InputPort{port, readProc, make([]*C.int, 0)}
 		}
