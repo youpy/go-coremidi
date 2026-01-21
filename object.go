@@ -37,8 +37,16 @@ func (object Object) Name() string {
 	return object.getStringProperty(C.kMIDIPropertyName)
 }
 
+func (object Object) DisplayName() string {
+	return object.getStringProperty(C.kMIDIPropertyDisplayName)
+}
+
 func (object Object) Manufacturer() string {
 	return object.getStringProperty(C.kMIDIPropertyManufacturer)
+}
+
+func (object Object) UniqueID() int32 {
+	return object.getIntProperty(C.kMIDIPropertyUniqueID)
 }
 
 func (object Object) getStringProperty(key C.CFStringRef) (propValue string) {
@@ -58,4 +66,15 @@ func (object Object) getStringProperty(key C.CFStringRef) (propValue string) {
 	propValue = C.GoString(value)
 
 	return
+}
+
+func (object Object) getIntProperty(key C.CFStringRef) int32 {
+	var result C.SInt32
+
+	osStatus := C.MIDIObjectGetIntegerProperty(object.object, key, &result)
+	if osStatus != C.noErr {
+		return 0
+	}
+
+	return int32(result)
 }
