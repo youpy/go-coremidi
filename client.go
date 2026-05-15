@@ -5,6 +5,7 @@ package coremidi
 #include <CoreMIDI/CoreMIDI.h>
 #include <CoreServices/CoreServices.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 extern void midiNotifyCallback(uintptr_t handle, MIDINotification *message);
 extern void midiNotifyProc(const MIDINotification *message, void *refCon);
@@ -20,7 +21,14 @@ import (
 type Client struct {
 	client       C.MIDIClientRef
 	notifyHandle cgo.Handle
-	hasNotify    bool
+	// refCon points to a C-allocated uintptr_t holding the cgo.Handle value.
+	// CoreMIDI's MIDIClientCreate refCon argument is a void*, but cgo.Handle is a
+	// uintptr; converting it directly to unsafe.Pointer trips checkptr under -race
+	// (the runtime treats turning a non-pointer integer into a pointer as bad
+	// pointer arithmetic). Storing the handle in C-allocated memory and passing a
+	// pointer to it avoids that, at the cost of one C.malloc/C.free per client.
+	refCon    unsafe.Pointer
+	hasNotify bool
 }
 
 type MIDINotificationMessageID int32
@@ -91,7 +99,8 @@ func NewClient(name string) (client Client, err error) {
 func NewClientWithNotification(name string, notify NotifyFunc) (client Client, err error) {
 	var clientRef C.MIDIClientRef
 	handle := cgo.NewHandle(notify)
-	refCon := unsafe.Pointer(handle)
+	refCon := C.malloc(C.size_t(unsafe.Sizeof(C.uintptr_t(0))))
+	*(*C.uintptr_t)(refCon) = C.uintptr_t(handle)
 
 	stringToCFString(name, func(cfName C.CFStringRef) {
 		osStatus := C.MIDIClientCreate(cfName, (C.MIDINotifyProc)(C.midiNotifyProc), refCon, &clientRef)
@@ -99,12 +108,13 @@ func NewClientWithNotification(name string, notify NotifyFunc) (client Client, e
 		if osStatus != C.noErr {
 			err = fmt.Errorf("%d: failed to create a client", int(osStatus))
 		} else {
-			client = Client{client: clientRef, notifyHandle: handle, hasNotify: true}
+			client = Client{client: clientRef, notifyHandle: handle, refCon: refCon, hasNotify: true}
 		}
 	})
 
 	if err != nil {
 		handle.Delete()
+		C.free(refCon)
 	}
 
 	return
@@ -120,6 +130,8 @@ func (client *Client) Close() error {
 
 	if client.hasNotify {
 		client.notifyHandle.Delete()
+		C.free(client.refCon)
+		client.refCon = nil
 		client.hasNotify = false
 	}
 
