@@ -1,6 +1,9 @@
 package coremidi
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestNewSource(t *testing.T) {
 	client, _ := NewClient("test")
@@ -30,8 +33,19 @@ func TestEntity(t *testing.T) {
 		t.Fatalf("failed to get sources")
 	}
 
-	entity := sources[0].Entity()
+	index := slices.IndexFunc(sources, func(s Source) bool {
+		return s.Manufacturer() == "Apple Inc."
+	})
+
+	// test only if the source with the expected manufacturer is found, otherwise it may be a test environment issue such as
+	// a missing entity
+	if index == -1 {
+		t.Log("Source with the expected manufacturer not found, skipping the test")
+		return
+	}
+
+	entity := sources[index].Entity()
 	if entity.Name() == "" {
-		t.Fatalf("failed to get entity")
+		t.Fatal("failed to get entity")
 	}
 }

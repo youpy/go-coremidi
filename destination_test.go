@@ -2,17 +2,13 @@ package coremidi
 
 import (
 	"bytes"
+	"slices"
 	"testing"
 	"time"
 )
 
 func TestNewDestination(t *testing.T) {
 	client, err := NewClient("a client")
-	if err != nil {
-		panic(err)
-	}
-
-	sources, err := AllSources()
 	if err != nil {
 		panic(err)
 	}
@@ -42,21 +38,13 @@ func TestNewDestination(t *testing.T) {
 	port, err := NewInputPort(client, "test", func(source Source, packet Packet) {
 		packet.Send(&outPort, &mixerDestination)
 	})
-
 	if err != nil {
 		panic(err)
 	}
 
-	for _, source := range sources {
-		if source.Name() != mixerSource.Name() {
-			func(source Source) {
-				port.Connect(source)
-			}(source)
-		}
-	}
-
+	port.Connect(mixerSource)
 	packet := NewPacket([]byte{0x90, 0x30, 100}, 1234)
-	packet.Received(&sources[0])
+	packet.Received(&mixerSource)
 
 	select {
 	case packet := <-ch:
@@ -75,14 +63,20 @@ func TestNewDestination(t *testing.T) {
 }
 
 func TestNumberOfDestinations(t *testing.T) {
+	client, _ := NewClient("a client")
+	_, _ = NewDestination(client, "A destination", func(packet Packet) {})
 	destinations, err := AllDestinations()
-	numberOfDestinations := len(destinations)
-
 	if err != nil {
 		t.Fatalf("failed to get destinations")
 	}
 
-	if numberOfDestinations <= 0 {
+	if len(destinations) <= 0 {
 		t.Fatalf("invalid number of destinations")
+	}
+
+	if !slices.ContainsFunc(destinations, func(d Destination) bool {
+		return d.Name() == "A destination"
+	}) {
+		t.Fatal("Expected destination not found")
 	}
 }

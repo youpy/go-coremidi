@@ -106,14 +106,6 @@ func main() {
 }
 ```
 
-## Testing
-
-```
-$ go test ./...
-```
-
-Before running the test, IAC Driver must be enabled in Audio MIDI Setup.app.
-
 ## Documents
 
 - http://godoc.org/github.com/youpy/go-coremidi

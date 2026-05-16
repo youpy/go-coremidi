@@ -39,3 +39,16 @@ func TestName(t *testing.T) {
 		t.Fatalf("invalid name")
 	}
 }
+
+func TestEntities(t *testing.T) {
+	devices, _ := AllDevices()
+	device := devices[0]
+	entities, err := device.Entities()
+	if err != nil {
+		t.Fatalf("failed to get entities")
+	}
+
+	if len(entities) <= 0 {
+		t.Fatalf("invalid number of entities")
+	}
+}
