@@ -1,3 +1,3 @@
 module github.com/youpy/go-coremidi
 
-go 1.14
+go 1.26
