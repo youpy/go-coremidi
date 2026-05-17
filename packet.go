@@ -15,6 +15,7 @@ type Packet struct {
 	TimeStamp uint64
 }
 
+// NewPacket constructs a Packet from raw MIDI bytes and a timestamp.
 func NewPacket(data []byte, timeStamp uint64) Packet {
 	return Packet{data, timeStamp}
 }
@@ -29,6 +30,7 @@ func (packet *Packet) createPacketList() C.MIDIPacketList {
 	return packetList
 }
 
+// Send transmits the packet through an output port to the given destination.
 func (packet *Packet) Send(port *OutputPort, destination *Destination) (err error) {
 	packetList := packet.createPacketList()
 	osStatus := C.MIDISend(port.port, destination.endpoint, &packetList)
@@ -40,6 +42,7 @@ func (packet *Packet) Send(port *OutputPort, destination *Destination) (err erro
 	return
 }
 
+// Received sends the packet to a source, simulating incoming MIDI data.
 func (packet *Packet) Received(source *Source) (err error) {
 	packetList := packet.createPacketList()
 	osStatus := C.MIDIReceived(source.endpoint, &packetList)

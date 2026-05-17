@@ -15,6 +15,7 @@ type Source struct {
 	*Object
 }
 
+// NewSource creates a virtual MIDI source with the given name.
 func NewSource(client Client, name string) (source Source, err error) {
 	var endpointRef C.MIDIEndpointRef
 
@@ -31,6 +32,7 @@ func NewSource(client Client, name string) (source Source, err error) {
 	return
 }
 
+// AllSources returns the currently available MIDI sources.
 func AllSources() (sources []Source, err error) {
 	numberOfSources := numberOfSources()
 	sources = make([]Source, numberOfSources)
@@ -52,6 +54,7 @@ func AllSources() (sources []Source, err error) {
 	return
 }
 
+// Entity returns the MIDI entity that owns this source.
 func (source *Source) Entity() (entity Entity) {
 	var entityRef C.MIDIEntityRef
 

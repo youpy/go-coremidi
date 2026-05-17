@@ -12,6 +12,7 @@ type Entity struct {
 	*Object
 }
 
+// Sources returns the sources associated with this MIDI entity.
 func (entity Entity) Sources() (sources []Source, err error) {
 	numberOfSources := int(C.ItemCount(C.MIDIEntityGetNumberOfSources(entity.entity)))
 	sources = make([]Source, numberOfSources)
@@ -31,6 +32,7 @@ func (entity Entity) Sources() (sources []Source, err error) {
 	return
 }
 
+// Destinations returns the destinations associated with this MIDI entity.
 func (entity Entity) Destinations() (destinations []Destination, err error) {
 	numberOfDestinations := int(C.ItemCount(C.MIDIEntityGetNumberOfDestinations(entity.entity)))
 	destinations = make([]Destination, numberOfDestinations)
@@ -50,6 +52,7 @@ func (entity Entity) Destinations() (destinations []Destination, err error) {
 	return
 }
 
+// Device returns the MIDI device that owns this entity.
 func (entity Entity) Device() (device Device) {
 	var deviceRef C.MIDIDeviceRef
 

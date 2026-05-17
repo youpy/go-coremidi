@@ -55,6 +55,7 @@ type OutputPort struct {
 	port C.MIDIPortRef
 }
 
+// NewOutputPort creates a MIDI output port for the specified client.
 func NewOutputPort(client Client, name string) (outputPort OutputPort, err error) {
 	var port C.MIDIPortRef
 
@@ -78,6 +79,7 @@ type InputPort struct {
 	writeFds []*C.int
 }
 
+// NewInputPort creates a MIDI input port and registers a callback for received packets.
 func NewInputPort(client Client, name string, readProc ReadProc) (inputPort InputPort, err error) {
 	var port C.MIDIPortRef
 
@@ -98,6 +100,7 @@ func NewInputPort(client Client, name string, readProc ReadProc) (inputPort Inpu
 	return
 }
 
+// Connect attaches the input port to a source so incoming MIDI is delivered to readProc.
 func (port InputPort) Connect(source Source) (portConnection, error) {
 	fd := make([]int, 2)
 	syscall.Pipe(fd)

@@ -56,6 +56,7 @@ type Destination struct {
 	*Object
 }
 
+// AllDestinations returns the currently available MIDI destinations.
 func AllDestinations() (destinations []Destination, err error) {
 	numberOfDestinations := numberOfDestinations()
 	destinations = make([]Destination, numberOfDestinations)
@@ -77,6 +78,7 @@ func AllDestinations() (destinations []Destination, err error) {
 	return
 }
 
+// NewDestination creates a new virtual MIDI destination and invokes readProc for incoming packets.
 func NewDestination(client Client, name string, readProc func(packet Packet)) (destination Destination, err error) {
 	var endpointRef C.MIDIEndpointRef
 
@@ -111,6 +113,7 @@ func NewDestination(client Client, name string, readProc func(packet Packet)) (d
 	return
 }
 
+// Dispose removes the destination endpoint from the system.
 func (dest Destination) Dispose() {
 	C.MIDIEndpointDispose(dest.endpoint)
 }

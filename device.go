@@ -14,6 +14,7 @@ type Device struct {
 	*Object
 }
 
+// AllDevices returns the currently available MIDI devices.
 func AllDevices() (devices []Device, err error) {
 	numberOfDevices := numberOfDevices()
 	devices = make([]Device, numberOfDevices)
@@ -35,6 +36,7 @@ func AllDevices() (devices []Device, err error) {
 	return
 }
 
+// Entities returns the entities exposed by this MIDI device.
 func (device Device) Entities() (entities []Entity, err error) {
 	numberOfEntitiles := int(C.ItemCount(C.MIDIDeviceGetNumberOfEntities(device.device)))
 	entities = make([]Entity, numberOfEntitiles)

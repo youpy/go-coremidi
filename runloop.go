@@ -73,11 +73,13 @@ import (
 	"runtime"
 )
 
+// RunLoop represents a CFRunLoop managed by this package.
 type RunLoop struct {
 	loop       C.CFRunLoopRef
 	stopSource C.CFRunLoopSourceRef
 }
 
+// CurrentRunLoop returns the current thread's CFRunLoop.
 // CurrentRunLoop returns the current thread's CFRunLoop.
 func CurrentRunLoop() *RunLoop {
 	loop := C.currentRunLoop()
@@ -85,6 +87,7 @@ func CurrentRunLoop() *RunLoop {
 	return &RunLoop{loop: loop, stopSource: 0}
 }
 
+// Run starts the CFRunLoop on the current thread.
 // Run starts the CFRunLoop on the current thread.
 func (r *RunLoop) Run() {
 	if r == nil || r.loop == 0 {
@@ -95,6 +98,7 @@ func (r *RunLoop) Run() {
 
 // StartRunLoop starts a CFRunLoop on a locked OS thread.
 // The returned RunLoop can be stopped with Stop().
+// StartRunLoop starts a CFRunLoop on a locked OS thread and returns it.
 func StartRunLoop() *RunLoop {
 	type rlData struct {
 		loop C.CFRunLoopRef
@@ -116,6 +120,7 @@ func StartRunLoop() *RunLoop {
 }
 
 // Stop stops the CFRunLoop.
+// Stop stops the CFRunLoop managed by this RunLoop.
 func (r *RunLoop) Stop() {
 	if r == nil || r.loop == 0 {
 		return

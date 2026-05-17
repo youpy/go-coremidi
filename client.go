@@ -120,6 +120,7 @@ func NewClientWithNotification(name string, notify NotifyFunc) (client Client, e
 	return
 }
 
+// Close disposes the MIDI client and releases any notification resources.
 func (client *Client) Close() error {
 	if client.client == 0 {
 		return nil

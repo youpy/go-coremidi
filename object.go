@@ -33,18 +33,22 @@ type Object struct {
 	object C.MIDIObjectRef
 }
 
+// Name returns the MIDI object's configured name.
 func (object Object) Name() string {
 	return object.getStringProperty(C.kMIDIPropertyName)
 }
 
+// DisplayName returns the display name of the MIDI object.
 func (object Object) DisplayName() string {
 	return object.getStringProperty(C.kMIDIPropertyDisplayName)
 }
 
+// Manufacturer returns the manufacturer string for the MIDI object.
 func (object Object) Manufacturer() string {
 	return object.getStringProperty(C.kMIDIPropertyManufacturer)
 }
 
+// UniqueID returns the unique identifier assigned to this MIDI object.
 func (object Object) UniqueID() int32 {
 	return object.getIntProperty(C.kMIDIPropertyUniqueID)
 }
