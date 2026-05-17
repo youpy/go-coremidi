@@ -40,8 +40,7 @@ func TestEntity(t *testing.T) {
 	// test only if the source with the expected manufacturer is found, otherwise it may be a test environment issue such as
 	// a missing entity
 	if index == -1 {
-		t.Log("Source with the expected manufacturer not found, skipping the test")
-		return
+		t.Skip("Source with the expected manufacturer not found, skipping the test")
 	}
 
 	entity := sources[index].Entity()
