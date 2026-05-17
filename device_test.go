@@ -1,6 +1,7 @@
 package coremidi
 
 import (
+	"os"
 	"testing"
 )
 
@@ -46,6 +47,11 @@ func TestEntities(t *testing.T) {
 	entities, err := device.Entities()
 	if err != nil {
 		t.Fatalf("failed to get entities")
+	}
+
+	// if running on CI, there may be no entities available, so we skip the test in that case
+	if os.Getenv("CI") == "true" {
+		t.Skip("No entities available, skipping the test")
 	}
 
 	if len(entities) <= 0 {
