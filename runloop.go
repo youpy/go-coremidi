@@ -34,6 +34,7 @@ void runLoopStop(CFRunLoopRef loop) {
 }
 
 static void stopSourcePerform(void *info) {
+	(void)info;
 	CFRunLoopStop(CFRunLoopGetCurrent());
 }
 
@@ -41,8 +42,7 @@ CFRunLoopSourceRef createStopSource(CFRunLoopRef loop) {
 	if (loop == NULL) {
 		return NULL;
 	}
-	CFRunLoopSourceContext ctx;
-	memset(&ctx, 0, sizeof(ctx));
+	CFRunLoopSourceContext ctx = {0};
 	ctx.perform = stopSourcePerform;
 	CFRunLoopSourceRef src = CFRunLoopSourceCreate(NULL, 0, &ctx);
 	if (src != NULL) {
@@ -51,16 +51,16 @@ CFRunLoopSourceRef createStopSource(CFRunLoopRef loop) {
 	return src;
 }
 
-void releaseStopSource(void *src, CFRunLoopRef loop) {
+void releaseStopSource(CFRunLoopSourceRef src, CFRunLoopRef loop) {
 	if (src != NULL && loop != NULL) {
-		CFRunLoopRemoveSource(loop, (CFRunLoopSourceRef)src, kCFRunLoopCommonModes);
+		CFRunLoopRemoveSource(loop, src, kCFRunLoopCommonModes);
 		CFRelease((CFTypeRef)src);
 	}
 }
 
-void signalStopSource(void *src, CFRunLoopRef loop) {
+void signalStopSource(CFRunLoopSourceRef src, CFRunLoopRef loop) {
 	if (src != NULL) {
-		CFRunLoopSourceSignal((CFRunLoopSourceRef)src);
+		CFRunLoopSourceSignal(src);
 		if (loop != NULL) {
 			CFRunLoopWakeUp(loop);
 		}
@@ -71,19 +71,18 @@ import "C"
 
 import (
 	"runtime"
-	"unsafe"
 )
 
 type RunLoop struct {
 	loop       C.CFRunLoopRef
-	stopSource unsafe.Pointer
+	stopSource C.CFRunLoopSourceRef
 }
 
 // CurrentRunLoop returns the current thread's CFRunLoop.
 func CurrentRunLoop() *RunLoop {
 	loop := C.currentRunLoop()
 	C.retainRunLoop(loop)
-	return &RunLoop{loop: loop, stopSource: nil}
+	return &RunLoop{loop: loop, stopSource: 0}
 }
 
 // Run starts the CFRunLoop on the current thread.
@@ -99,7 +98,7 @@ func (r *RunLoop) Run() {
 func StartRunLoop() *RunLoop {
 	type rlData struct {
 		loop C.CFRunLoopRef
-		src  unsafe.Pointer
+		src  C.CFRunLoopSourceRef
 	}
 	ch := make(chan rlData, 1)
 	go func() {
@@ -107,9 +106,9 @@ func StartRunLoop() *RunLoop {
 		loop := C.currentRunLoop()
 		C.retainRunLoop(loop)
 		src := C.createStopSource(loop)
-		ch <- rlData{loop: loop, src: unsafe.Pointer(src)}
+		ch <- rlData{loop: loop, src: src}
 		C.runLoopRun()
-		C.releaseStopSource(unsafe.Pointer(src), loop)
+		C.releaseStopSource(src, loop)
 		C.releaseRunLoop(loop)
 	}()
 	d := <-ch
@@ -121,7 +120,7 @@ func (r *RunLoop) Stop() {
 	if r == nil || r.loop == 0 {
 		return
 	}
-	if r.stopSource != nil {
+	if r.stopSource != 0 {
 		C.signalStopSource(r.stopSource, r.loop)
 		return
 	}
